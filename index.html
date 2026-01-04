@@ -508,11 +508,45 @@
             const startModal = document.getElementById('start-modal');
             startModal.classList.add('visible');
 
-            // Bind Modal Buttons
-            document.getElementById('btn-webcam').addEventListener('click', () => {
-                startModal.classList.remove('visible');
-                setTimeout(() => startModal.style.display = 'none', 500);
-                startWebcamMode();
+            // Bind Modal Buttons - Critical Update for Mobile Permissions
+            document.getElementById('btn-webcam').addEventListener('click', async () => {
+                // Request camera immediately within the user gesture event
+                try {
+                    // Check if supported
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error("Browser API not supported");
+                    }
+
+                    const constraints = {
+                        video: {
+                            facingMode: 'user',
+                            width: { ideal: 640 },
+                            height: { ideal: 480 }
+                        }
+                    };
+                    
+                    // This must happen directly in the click handler for iOS/Android
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    video.srcObject = stream;
+                    
+                    // Explicit play is often required after assigning srcObject
+                    await video.play().catch(e => console.log("Play error:", e));
+
+                    // Only close modal and proceed if camera succeeded
+                    startModal.classList.remove('visible');
+                    setTimeout(() => startModal.style.display = 'none', 500);
+                    
+                    // Proceed to load AI model
+                    startWebcamMode();
+
+                } catch (err) {
+                    console.warn("Camera access failed:", err);
+                    alert("Camera access denied or not supported. Switching to Touch/Mouse mode.");
+                    
+                    startModal.classList.remove('visible');
+                    setTimeout(() => startModal.style.display = 'none', 500);
+                    startManualMode();
+                }
             });
 
             document.getElementById('btn-manual').addEventListener('click', () => {
@@ -525,10 +559,18 @@
         async function startWebcamMode() {
             STATE.isManualMode = false;
             try {
-                await initComputerVision();
+                // Camera is already active, just load the model
+                await initMediaPipeModel();
+                
+                // Start prediction loop if model loaded and video ready
+                if (video.readyState >= 2) {
+                    predictWebcam();
+                } else {
+                    video.addEventListener("loadeddata", predictWebcam);
+                }
             } catch (err) {
-                console.warn("CV Init Failed, falling back to manual:", err);
-                alert("Could not start webcam. Please check permissions or use Manual Mode.");
+                console.warn("Model Init Failed:", err);
+                alert("Failed to load gesture recognition model. You can still view the scene.");
                 startManualMode();
                 return;
             }
@@ -889,17 +931,13 @@
         }
 
         // --- COMPUTER VISION LOGIC ---
-        async function initComputerVision() {
+        // Renamed and streamlined: Only initializes the AI model
+        async function initMediaPipeModel() {
             try {
                 const vision = await FilesetResolver.forVisionTasks(
                     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
                 );
                 
-                // Attempt to init hand landmarker
-                // Note: delegate: "GPU" is unstable on some Safari versions, 
-                // but FilesetResolver tries to handle WASM. 
-                // Falling back to CPU if GPU fails is handled by the try/catch logic block in some implementations,
-                // but here we just try GPU first.
                 handLandmarker = await HandLandmarker.createFromOptions(vision, {
                     baseOptions: {
                         modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
@@ -908,27 +946,7 @@
                     runningMode: "VIDEO",
                     numHands: 1
                 });
-
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    try {
-                        // Constraints optimized for mobile/perf
-                        const constraints = {
-                            video: {
-                                facingMode: 'user', // Front camera
-                                width: { ideal: 640 },
-                                height: { ideal: 480 }
-                            }
-                        };
-                        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                        video.srcObject = stream;
-                        // video.play() is needed on some browsers if autoplay fails
-                        video.play().catch(e => console.log("Autoplay prevented:", e));
-                        video.addEventListener("loadeddata", predictWebcam);
-                    } catch (e) {
-                        console.warn("Camera not found or permission denied:", e);
-                        throw e; // Rethrow to trigger fallback in caller
-                    }
-                }
+                
             } catch (error) {
                 console.error("Failed to initialize MediaPipe:", error);
                 throw error; // Rethrow to trigger fallback
