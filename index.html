@@ -75,8 +75,8 @@
             pointer-events: none !important;
         }
 
-        /* Loader */
-        #loader {
+        /* Loader & Camera Loader */
+        #loader, #camera-loader {
             position: fixed;
             top: 0;
             left: 0;
@@ -89,6 +89,16 @@
             align-items: center;
             z-index: 9999;
             transition: opacity 1s ease;
+        }
+        
+        #camera-loader {
+            background: rgba(0,0,0,0.9);
+            z-index: 3000;
+            display: none; /* Hidden by default */
+        }
+
+        #camera-loader.active {
+            display: flex;
         }
 
         .spinner {
@@ -106,12 +116,14 @@
             letter-spacing: 2px;
             color: var(--gold);
             font-size: 14px;
+            text-align: center;
+            line-height: 1.5;
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Start Modal */
-        #start-modal {
+        /* Start Modal & Help Modal */
+        #start-modal, #help-modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -129,7 +141,7 @@
             transition: opacity 0.5s ease;
         }
 
-        #start-modal.visible {
+        #start-modal.visible, #help-modal.visible {
             display: flex;
             opacity: 1;
         }
@@ -141,6 +153,7 @@
             background: rgba(20, 20, 20, 0.9);
             box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
             max-width: 90%;
+            width: 500px;
             box-sizing: border-box;
         }
 
@@ -169,7 +182,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             text-transform: uppercase;
-            min-width: 200px;
+            min-width: 150px;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -177,6 +190,22 @@
             background: var(--gold);
             color: var(--black);
             box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+        }
+        
+        /* Guide Text */
+        .guide-text p {
+            font-size: 16px;
+            margin: 15px 0;
+            color: #ccc;
+            text-align: left;
+            padding-left: 20px;
+            border-left: 2px solid var(--gold);
+        }
+        .guide-highlight {
+            color: var(--gold);
+            font-weight: bold;
+            font-family: 'Cinzel', serif;
+            margin-right: 10px;
         }
 
         /* Header */
@@ -208,7 +237,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             z-index: 20;
             width: 100%;
         }
@@ -243,14 +272,29 @@
         .hint-text {
             font-size: 12px;
             color: rgba(252, 238, 167, 0.6);
-            margin-top: 8px;
             letter-spacing: 0.5px;
+        }
+
+        .guide-link {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 12px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.5);
+            padding-bottom: 2px;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.3s;
+        }
+        .guide-link:hover {
+            color: #fff;
+            border-color: #fff;
         }
 
         /* Manual Controls */
         #manual-controls {
             position: absolute;
-            bottom: 120px; /* Shifted up to avoid overlapping with upload button on mobile */
+            bottom: 140px; /* Shifted up */
             right: 40px;
             display: flex;
             flex-direction: column;
@@ -301,6 +345,7 @@
 
             .modal-content {
                 padding: 20px;
+                width: 90%;
             }
             
             .modal-title {
@@ -315,7 +360,7 @@
             #manual-controls {
                 right: 50%;
                 transform: translateX(50%);
-                bottom: 130px;
+                bottom: 150px;
                 flex-direction: row;
                 width: 90%;
                 justify-content: center;
@@ -337,10 +382,16 @@
 </head>
 <body>
 
-    <!-- Loader -->
+    <!-- App Loader -->
     <div id="loader">
         <div class="spinner"></div>
         <div class="loader-text">LOADING HOLIDAY MAGIC</div>
+    </div>
+
+    <!-- Camera Loader Overlay -->
+    <div id="camera-loader">
+        <div class="spinner"></div>
+        <div class="loader-text">CONNECTING TO SPIRITS...<br><span style="font-size: 11px; opacity: 0.7; font-family: sans-serif; margin-top:5px; display:block;">Please allow camera access</span></div>
     </div>
 
     <!-- Start Modal -->
@@ -350,6 +401,22 @@
             <div class="modal-buttons">
                 <button class="btn-modal" id="btn-webcam">Webcam & Hand Gestures</button>
                 <button class="btn-modal" id="btn-manual">Mouse & Touch</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help/Gesture Guide Modal -->
+    <div id="help-modal">
+        <div class="modal-content">
+            <div class="modal-title">Gesture Guide</div>
+            <div class="guide-text">
+                <p><span class="guide-highlight">Open Hand</span> Scatter the stars (Scatter Mode)</p>
+                <p><span class="guide-highlight">Closed Fist</span> Summon the tree (Tree Mode)</p>
+                <p><span class="guide-highlight">Pinch (Thumb+Index)</span> Focus on memories (Focus Mode)</p>
+                <p><span class="guide-highlight">Move Hand</span> Rotate the scene</p>
+            </div>
+            <div class="modal-buttons" style="margin-top: 30px;">
+                <button class="btn-modal" id="btn-close-help">Close</button>
             </div>
         </div>
     </div>
@@ -364,6 +431,7 @@
                 <input type="file" id="imageInput" accept="image/*">
             </label>
             <div class="hint-text">Press 'H' to Hide Controls</div>
+            <a href="#" id="trigger-help" class="guide-link">Gesture Guide</a>
         </div>
 
         <!-- Manual Controls (Hidden by default) -->
@@ -498,8 +566,18 @@
             setupImageUpload();
             setupZoomControls(); // Enable global zoom
 
+            // Help Modal Handlers
+            const helpModal = document.getElementById('help-modal');
+            document.getElementById('trigger-help').addEventListener('click', (e) => {
+                e.preventDefault();
+                helpModal.classList.add('visible');
+            });
+            document.getElementById('btn-close-help').addEventListener('click', () => {
+                helpModal.classList.remove('visible');
+            });
+
             // 4. Mode Selection Flow
-            // Hide Loader
+            // Hide App Loader
             const loader = document.getElementById('loader');
             loader.style.opacity = '0';
             setTimeout(() => loader.remove(), 1000);
@@ -510,6 +588,14 @@
 
             // Bind Modal Buttons - Critical Update for Mobile Permissions
             document.getElementById('btn-webcam').addEventListener('click', async () => {
+                // Show Camera Loading Overlay immediately
+                const cameraLoader = document.getElementById('camera-loader');
+                cameraLoader.classList.add('active');
+                
+                // Hide Start Modal
+                startModal.classList.remove('visible');
+                startModal.style.display = 'none';
+
                 // Request camera immediately within the user gesture event
                 try {
                     // Check if supported
@@ -531,20 +617,17 @@
                     
                     // Explicit play is often required after assigning srcObject
                     await video.play().catch(e => console.log("Play error:", e));
-
-                    // Only close modal and proceed if camera succeeded
-                    startModal.classList.remove('visible');
-                    setTimeout(() => startModal.style.display = 'none', 500);
                     
                     // Proceed to load AI model
-                    startWebcamMode();
+                    await startWebcamMode();
+                    
+                    // Hide Camera Loader only after everything is ready
+                    cameraLoader.classList.remove('active');
 
                 } catch (err) {
                     console.warn("Camera access failed:", err);
+                    cameraLoader.classList.remove('active');
                     alert("Camera access denied or not supported. Switching to Touch/Mouse mode.");
-                    
-                    startModal.classList.remove('visible');
-                    setTimeout(() => startModal.style.display = 'none', 500);
                     startManualMode();
                 }
             });
@@ -570,9 +653,7 @@
                 }
             } catch (err) {
                 console.warn("Model Init Failed:", err);
-                alert("Failed to load gesture recognition model. You can still view the scene.");
-                startManualMode();
-                return;
+                throw err; // Throw to be caught by the caller to hide loader
             }
             animate();
         }
@@ -586,7 +667,7 @@
             // Mouse Move for Rotation
             window.addEventListener('mousemove', (e) => {
                 // If hovering over UI buttons, ignore rotation
-                if (e.target.closest('button, label, input')) return;
+                if (e.target.closest('button, label, input, a')) return;
 
                 // If not pressing button (for desktop click-drag if we wanted it, 
                 // but here we follow 'head tracking style' simple hover)
@@ -603,7 +684,7 @@
             // Touch Move for Rotation
             window.addEventListener('touchmove', (e) => {
                 // Ignore if touching UI
-                if (e.target.closest('button, label, input')) return;
+                if (e.target.closest('button, label, input, a')) return;
 
                 // Prevent scrolling when interacting with the 3D scene
                 e.preventDefault(); 
@@ -653,7 +734,7 @@
             // Mouse Wheel
             window.addEventListener('wheel', (e) => {
                 // Allow scrolling if hovering UI (though usually overflow hidden)
-                if (e.target.closest('button, label, input')) return;
+                if (e.target.closest('button, label, input, a')) return;
                 
                 e.preventDefault();
                 // Zoom amount based on wheel delta
@@ -666,7 +747,7 @@
             let initialPinchDist = 0;
             
             window.addEventListener('touchstart', (e) => {
-                if (e.target.closest('button, label, input')) return;
+                if (e.target.closest('button, label, input, a')) return;
 
                 if (e.touches.length === 2) {
                     initialPinchDist = Math.hypot(
@@ -677,7 +758,7 @@
             }, { passive: false });
 
             window.addEventListener('touchmove', (e) => {
-                if (e.target.closest('button, label, input')) return;
+                if (e.target.closest('button, label, input, a')) return;
 
                 if (e.touches.length === 2) {
                     e.preventDefault();
