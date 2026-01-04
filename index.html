@@ -40,6 +40,24 @@
             touch-action: none; /* Prevent browser handling of gestures */
         }
 
+        /* WebGL Container */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            outline: none;
+            overflow: hidden;
+        }
+
+        #canvas-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
         /* UI Containers */
         #ui-container {
             position: absolute;
@@ -316,7 +334,6 @@
             }
         }
     </style>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body>
 
@@ -409,11 +426,7 @@
         async function init() {
             // 1. Scene Setup
             const container = document.createElement('div');
-            // Ensure canvas is behind UI
-            container.style.position = 'fixed';
-            container.style.top = '0';
-            container.style.left = '0';
-            container.style.zIndex = '0';
+            container.id = 'canvas-container'; // Set ID for CSS styling
             document.body.appendChild(container);
 
             scene = new THREE.Scene();
@@ -424,7 +437,11 @@
             // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap pixel ratio for performance
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            // Critical fix for Mobile/iOS Edge: Pass false to updateStyle to prevent Three.js from 
+            // setting inline width/height styles that conflict with CSS 100% sizing.
+            renderer.setSize(window.innerWidth, window.innerHeight, false);
+            
             renderer.toneMapping = THREE.ReinhardToneMapping;
             renderer.toneMappingExposure = 2.2;
             container.appendChild(renderer.domElement);
@@ -446,6 +463,8 @@
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
             composer.addPass(bloomPass);
+            // Ensure composer size matches renderer
+            composer.setSize(window.innerWidth, window.innerHeight);
 
             // Lights
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -524,16 +543,26 @@
 
             // Mouse Move for Rotation
             window.addEventListener('mousemove', (e) => {
+                // If hovering over UI buttons, ignore rotation
+                if (e.target.closest('button, label, input')) return;
+
                 // If not pressing button (for desktop click-drag if we wanted it, 
                 // but here we follow 'head tracking style' simple hover)
                 const x = e.clientX / window.innerWidth;
                 const y = e.clientY / window.innerHeight;
-                STATE.handRotation.y = (0.5 - x) * 3;
-                STATE.handRotation.x = (0.5 - y) * 2;
+                
+                // Inverted logic for Direct Manipulation (Follow Mouse)
+                // Left (-0.5) -> Rotate Y Negative (Clockwise) ? No.
+                // Natural: Mouse Right -> Object Rotates with mouse (Front face moves Right).
+                STATE.handRotation.y = (x - 0.5) * 3; 
+                STATE.handRotation.x = (y - 0.5) * 2; 
             });
 
             // Touch Move for Rotation
             window.addEventListener('touchmove', (e) => {
+                // Ignore if touching UI
+                if (e.target.closest('button, label, input')) return;
+
                 // Prevent scrolling when interacting with the 3D scene
                 e.preventDefault(); 
                 
@@ -541,8 +570,10 @@
                 if(e.touches.length === 1) {
                     const x = e.touches[0].clientX / window.innerWidth;
                     const y = e.touches[0].clientY / window.innerHeight;
-                    STATE.handRotation.y = (0.5 - x) * 3;
-                    STATE.handRotation.x = (0.5 - y) * 2;
+                    
+                    // Inverted logic for Direct Manipulation
+                    STATE.handRotation.y = (x - 0.5) * 3;
+                    STATE.handRotation.x = (y - 0.5) * 2;
                 }
             }, { passive: false });
 
@@ -579,6 +610,9 @@
         function setupZoomControls() {
             // Mouse Wheel
             window.addEventListener('wheel', (e) => {
+                // Allow scrolling if hovering UI (though usually overflow hidden)
+                if (e.target.closest('button, label, input')) return;
+                
                 e.preventDefault();
                 // Zoom amount based on wheel delta
                 const delta = e.deltaY * 0.05;
@@ -590,6 +624,8 @@
             let initialPinchDist = 0;
             
             window.addEventListener('touchstart', (e) => {
+                if (e.target.closest('button, label, input')) return;
+
                 if (e.touches.length === 2) {
                     initialPinchDist = Math.hypot(
                         e.touches[0].pageX - e.touches[1].pageX,
@@ -599,6 +635,8 @@
             }, { passive: false });
 
             window.addEventListener('touchmove', (e) => {
+                if (e.target.closest('button, label, input')) return;
+
                 if (e.touches.length === 2) {
                     e.preventDefault();
                     const currentDist = Math.hypot(
@@ -624,6 +662,10 @@
         function setMode(mode) {
             if (mode === 'FOCUS') {
                 STATE.mode = 'FOCUS';
+                // Auto-center the view by resetting rotation state
+                STATE.handRotation.x = 0;
+                STATE.handRotation.y = 0;
+                
                 if (photoObjects.length > 0) {
                     STATE.targetPhoto = photoObjects[Math.floor(Math.random() * photoObjects.length)];
                 }
@@ -928,8 +970,9 @@
                 const palmY = lm[9].y;
                 
                 // Map 0..1 to -PI..PI (inverted for natural feel)
-                STATE.handRotation.y = (0.5 - palmX) * 3; 
-                STATE.handRotation.x = (0.5 - palmY) * 2; 
+                // Inverted so moving hand right -> Object rotates right (follows hand)
+                STATE.handRotation.y = (palmX - 0.5) * 3; 
+                STATE.handRotation.x = (palmY - 0.5) * 2; 
 
                 // Gesture Detection
                 const pinchDist = thumb.distanceTo(index);
@@ -987,7 +1030,8 @@
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            // Critical: pass false to updateStyle to keep CSS 100% working
+            renderer.setSize(window.innerWidth, window.innerHeight, false);
             composer.setSize(window.innerWidth, window.innerHeight);
         }
 
@@ -1002,6 +1046,5 @@
         init();
 
     </script>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>
