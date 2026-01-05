@@ -479,6 +479,13 @@
             cameraZ: 50 // Default target Z for zoom
         };
 
+        // --- GESTURE CONFIGURATION ---
+        // History buffer for hysteresis (debouncing)
+        const GESTURE_HISTORY = [];
+        const HISTORY_SIZE = 10; 
+        // Smoothing factor for rotation (Lower = smoother but more latency)
+        const ROTATION_SMOOTHING = 0.1;
+
         // --- THREE.JS GLOBALS ---
         let camera, scene, renderer, composer;
         let mainGroup, particles = [], dustSystem;
@@ -1056,42 +1063,84 @@
 
         function processGestures(result) {
             if (result.landmarks && result.landmarks.length > 0) {
-                const lm = result.landmarks[0]; // First hand
+                const lm = result.landmarks[0]; 
 
-                // Indices: Wrist(0), Thumb(4), Index(8), Middle(12), Ring(16), Pinky(20)
-                const thumb = new THREE.Vector3(lm[4].x, lm[4].y, lm[4].z);
-                const index = new THREE.Vector3(lm[8].x, lm[8].y, lm[8].z);
-                const wrist = new THREE.Vector3(lm[0].x, lm[0].y, lm[0].z);
-                
-                // Interaction Mapping (Rotation)
+                // --- 1. SMOOTH ROTATION ---
                 // Center of palm (approx landmark 9)
                 const palmX = lm[9].x;
                 const palmY = lm[9].y;
                 
-                // Map 0..1 to -PI..PI (inverted for natural feel)
-                // Inverted so moving hand right -> Object rotates right (follows hand)
-                STATE.handRotation.y = (palmX - 0.5) * 3; 
-                STATE.handRotation.x = (palmY - 0.5) * 2; 
+                // Target rotation based on hand position
+                const targetRotY = (palmX - 0.5) * 3; 
+                const targetRotX = (palmY - 0.5) * 2; 
 
-                // Gesture Detection
-                const pinchDist = thumb.distanceTo(index);
+                // Apply Exponential Moving Average (EMA) for silky smooth rotation
+                // Note: animate() also interpolates mainGroup to STATE, providing double buffering
+                STATE.handRotation.y += (targetRotY - STATE.handRotation.y) * ROTATION_SMOOTHING;
+                STATE.handRotation.x += (targetRotX - STATE.handRotation.x) * ROTATION_SMOOTHING;
+
+                // --- 2. GESTURE RECOGNITION WITH PRIORITY ---
+                const wrist = new THREE.Vector3(lm[0].x, lm[0].y, lm[0].z);
+                const thumbTip = new THREE.Vector3(lm[4].x, lm[4].y, lm[4].z);
+                const indexTip = new THREE.Vector3(lm[8].x, lm[8].y, lm[8].z);
+
+                const pinchDist = thumbTip.distanceTo(indexTip);
                 
-                // Average distance of fingertips to wrist
+                // Average distance of 4 fingers to wrist (Index, Middle, Ring, Pinky)
                 const tips = [8, 12, 16, 20];
-                let avgDist = 0;
+                let avgFingerDist = 0;
                 tips.forEach(t => {
                     const v = new THREE.Vector3(lm[t].x, lm[t].y, lm[t].z);
-                    avgDist += v.distanceTo(wrist);
+                    avgFingerDist += v.distanceTo(wrist);
                 });
-                avgDist /= 4;
+                avgFingerDist /= 4;
 
-                // State Logic
-                if (pinchDist < 0.05) {
-                    setMode('FOCUS');
-                } else if (avgDist < 0.25) {
-                    setMode('TREE');
-                } else if (avgDist > 0.4) {
-                    setMode('SCATTER');
+                // Determine Instantaneous Candidate
+                // Default to current mode to provide stickiness (hold state if uncertain)
+                let candidate = STATE.mode; 
+
+                // PRIORITY 1: TREE (Fist) 
+                // Strongest signal: All fingers collapsed tight against palm
+                if (avgFingerDist < 0.28) { 
+                    candidate = 'TREE';
+                } 
+                // PRIORITY 2: SCATTER (Open Hand)
+                // Strong signal: Fingers clearly extended
+                else if (avgFingerDist > 0.45) {
+                    candidate = 'SCATTER';
+                }
+                // PRIORITY 3: FOCUS (Pinch) 
+                // Only detecting pinch if hand is in "neutral" zone (not a tight fist, not fully open)
+                // This prevents detecting a pinch while making a fist
+                else if (pinchDist < 0.05) {
+                    candidate = 'FOCUS';
+                }
+
+                // --- 3. HYSTERESIS / DEBOUNCING ---
+                GESTURE_HISTORY.push(candidate);
+                if (GESTURE_HISTORY.length > HISTORY_SIZE) {
+                    GESTURE_HISTORY.shift();
+                }
+
+                // Calculate consensus
+                // We only switch if a specific gesture appears in >70% of the history frames
+                const counts = {};
+                let maxCount = 0;
+                let consensus = null;
+                
+                for (const g of GESTURE_HISTORY) {
+                    counts[g] = (counts[g] || 0) + 1;
+                    if (counts[g] > maxCount) {
+                        maxCount = counts[g];
+                        consensus = g;
+                    }
+                }
+
+                // Apply switch if consensus is strong and different from current state
+                if (consensus && consensus !== STATE.mode && maxCount >= HISTORY_SIZE * 0.7) {
+                    setMode(consensus);
+                    // Clear history to prevent rapid bouncing
+                    GESTURE_HISTORY.length = 0; 
                 }
             }
         }
@@ -1103,6 +1152,8 @@
             const dt = clock.getDelta();
 
             // Apply Hand Rotation Influence
+            // Lerp mainGroup towards the (already smoothed) STATE.handRotation
+            // Using 0.1 here adds a second layer of smoothing ("cinematic" feel)
             mainGroup.rotation.y += (STATE.handRotation.y - mainGroup.rotation.y) * 0.1;
             mainGroup.rotation.x += (STATE.handRotation.x - mainGroup.rotation.x) * 0.1;
 
