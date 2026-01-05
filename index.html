@@ -1094,18 +1094,26 @@
                 const lm = result.landmarks[0]; 
 
                 // --- 1. SMOOTH ROTATION ---
-                // Center of palm (approx landmark 9)
-                const palmX = lm[9].x;
-                const palmY = lm[9].y;
-                
-                // Target rotation based on hand position
-                const targetRotY = (palmX - 0.5) * 3; 
-                const targetRotX = (palmY - 0.5) * 2; 
+                // MODIFIED: Logic to lock rotation when in FOCUS mode
+                if (STATE.mode === 'FOCUS') {
+                    // Lock to center (0,0) to keep photo steady
+                    // We interpolate towards 0 to avoid snapping
+                    STATE.handRotation.y += (0 - STATE.handRotation.y) * 0.1;
+                    STATE.handRotation.x += (0 - STATE.handRotation.x) * 0.1;
+                } else {
+                    // Normal hand tracking for rotation
+                    // Center of palm (approx landmark 9)
+                    const palmX = lm[9].x;
+                    const palmY = lm[9].y;
+                    
+                    // Target rotation based on hand position
+                    const targetRotY = (palmX - 0.5) * 3; 
+                    const targetRotX = (palmY - 0.5) * 2; 
 
-                // Apply Exponential Moving Average (EMA) for silky smooth rotation
-                // Note: animate() also interpolates mainGroup to STATE, providing double buffering
-                STATE.handRotation.y += (targetRotY - STATE.handRotation.y) * ROTATION_SMOOTHING;
-                STATE.handRotation.x += (targetRotX - STATE.handRotation.x) * ROTATION_SMOOTHING;
+                    // Apply Exponential Moving Average (EMA) for silky smooth rotation
+                    STATE.handRotation.y += (targetRotY - STATE.handRotation.y) * ROTATION_SMOOTHING;
+                    STATE.handRotation.x += (targetRotX - STATE.handRotation.x) * ROTATION_SMOOTHING;
+                }
 
                 // --- 2. GESTURE RECOGNITION WITH PRIORITY ---
                 const wrist = new THREE.Vector3(lm[0].x, lm[0].y, lm[0].z);
