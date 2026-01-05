@@ -200,12 +200,18 @@
             text-align: left;
             padding-left: 20px;
             border-left: 2px solid var(--gold);
+            display: flex;
+            align-items: center;
         }
         .guide-highlight {
             color: var(--gold);
             font-weight: bold;
             font-family: 'Cinzel', serif;
             margin-right: 10px;
+            min-width: 140px; /* Ensure alignment */
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
         /* Header */
@@ -410,10 +416,10 @@
         <div class="modal-content">
             <div class="modal-title">Gesture Guide</div>
             <div class="guide-text">
-                <p><span class="guide-highlight">Open Hand</span> Scatter the stars (Scatter Mode)</p>
-                <p><span class="guide-highlight">Closed Fist</span> Summon the tree (Tree Mode)</p>
-                <p><span class="guide-highlight">Pinch (Thumb+Index)</span> Focus on memories (Focus Mode)</p>
-                <p><span class="guide-highlight">Move Hand</span> Rotate the scene</p>
+                <p><span class="guide-highlight">🖐️ Open Hand</span> Scatter the stars (Scatter Mode)</p>
+                <p><span class="guide-highlight">✊ Closed Fist</span> Summon the tree (Tree Mode)</p>
+                <p><span class="guide-highlight">👌 Pinch</span> Focus on memories (Focus Mode)</p>
+                <p><span class="guide-highlight">👋 Move Hand</span> Rotate the scene</p>
             </div>
             <div class="modal-buttons" style="margin-top: 30px;">
                 <button class="btn-modal" id="btn-close-help">Close</button>
@@ -482,7 +488,8 @@
         // --- GESTURE CONFIGURATION ---
         // History buffer for hysteresis (debouncing)
         const GESTURE_HISTORY = [];
-        const HISTORY_SIZE = 10; 
+        // Optimized to 5 frames for faster response time while maintaining stability
+        const HISTORY_SIZE = 5; 
         // Smoothing factor for rotation (Lower = smoother but more latency)
         const ROTATION_SMOOTHING = 0.1;
 
