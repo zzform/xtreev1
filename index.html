@@ -434,7 +434,7 @@
         <div class="upload-wrapper">
             <label class="btn-upload">
                 Add Memories
-                <input type="file" id="imageInput" accept="image/*">
+                <input type="file" id="imageInput" accept="image/*" multiple>
             </label>
             <div class="hint-text">Press 'H' to Hide Controls</div>
             <a href="#" id="trigger-help" class="guide-link">Gesture Guide</a>
@@ -1033,16 +1033,20 @@
         function setupImageUpload() {
             const input = document.getElementById('imageInput');
             input.addEventListener('change', (e) => {
-                const f = e.target.files[0];
-                if (!f) return;
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    new THREE.TextureLoader().load(ev.target.result, (t) => {
-                        t.colorSpace = THREE.SRGBColorSpace;
-                        addPhotoToScene(t);
-                    });
-                }
-                reader.readAsDataURL(f);
+                const files = e.target.files;
+                if (!files || files.length === 0) return;
+                
+                // Iterate through all selected files
+                Array.from(files).forEach(f => {
+                     const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            new THREE.TextureLoader().load(ev.target.result, (t) => {
+                                t.colorSpace = THREE.SRGBColorSpace;
+                                addPhotoToScene(t);
+                            });
+                        }
+                        reader.readAsDataURL(f);
+                });
             });
         }
 
@@ -1111,7 +1115,13 @@
                     // Hand Left (Real) -> Image Right (x=1) -> Should be CW (-1.5)
                     // (1 - 0.5) * k = -1.5 => k = -3.
                     const targetRotY = (palmX - 0.5) * -3; 
-                    const targetRotX = (palmY - 0.5) * -2; 
+                    
+                    // Vertical Rotation Fix:
+                    // Hand Up (y near 0) -> See Bottom -> Tree Rot X Negative
+                    // (0 - 0.5) * k = negative -> k is positive.
+                    // Previous was * -2 (resulting in positive RotX -> See Top).
+                    // New is * 2.
+                    const targetRotX = (palmY - 0.5) * 2; 
 
                     // Apply Exponential Moving Average (EMA) for silky smooth rotation
                     STATE.handRotation.y += (targetRotY - STATE.handRotation.y) * ROTATION_SMOOTHING;
