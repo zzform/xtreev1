@@ -488,10 +488,10 @@
         // --- GESTURE CONFIGURATION ---
         // History buffer for hysteresis (debouncing)
         const GESTURE_HISTORY = [];
-        // Reverted to 10 frames for better stability
-        const HISTORY_SIZE = 10; 
-        // Smoothing factor for rotation (Lower = smoother but more latency)
-        const ROTATION_SMOOTHING = 0.1;
+        // Optimized to 5 frames for faster response time while maintaining stability
+        const HISTORY_SIZE = 5; 
+        // Increased smoothing factor for faster reaction (0.1 was too slow)
+        const ROTATION_SMOOTHING = 0.3;
 
         // --- THREE.JS GLOBALS ---
         let camera, scene, renderer, composer;
@@ -688,9 +688,9 @@
                 const x = e.clientX / window.innerWidth;
                 const y = e.clientY / window.innerHeight;
                 
-                // Inverted logic for Direct Manipulation (Follow Mouse)
-                // Left (-0.5) -> Rotate Y Negative (Clockwise) ? No.
-                // Natural: Mouse Right -> Object Rotates with mouse (Front face moves Right).
+                // Manual/Mouse Logic:
+                // Mouse Left (x=0) -> Should be CW (-1.5)
+                // (0 - 0.5) * k = -1.5 => k = 3.
                 STATE.handRotation.y = (x - 0.5) * 3; 
                 STATE.handRotation.x = (y - 0.5) * 2; 
             });
@@ -708,7 +708,7 @@
                     const x = e.touches[0].clientX / window.innerWidth;
                     const y = e.touches[0].clientY / window.innerHeight;
                     
-                    // Inverted logic for Direct Manipulation
+                    // Manual/Touch Logic: Same as mouse
                     STATE.handRotation.y = (x - 0.5) * 3;
                     STATE.handRotation.x = (y - 0.5) * 2;
                 }
@@ -1107,8 +1107,11 @@
                     const palmY = lm[9].y;
                     
                     // Target rotation based on hand position
-                    const targetRotY = (palmX - 0.5) * 3; 
-                    const targetRotX = (palmY - 0.5) * 2; 
+                    // Webcam Logic: 
+                    // Hand Left (Real) -> Image Right (x=1) -> Should be CW (-1.5)
+                    // (1 - 0.5) * k = -1.5 => k = -3.
+                    const targetRotY = (palmX - 0.5) * -3; 
+                    const targetRotX = (palmY - 0.5) * -2; 
 
                     // Apply Exponential Moving Average (EMA) for silky smooth rotation
                     STATE.handRotation.y += (targetRotY - STATE.handRotation.y) * ROTATION_SMOOTHING;
@@ -1193,9 +1196,9 @@
 
             // Apply Hand Rotation Influence
             // Lerp mainGroup towards the (already smoothed) STATE.handRotation
-            // Using 0.1 here adds a second layer of smoothing ("cinematic" feel)
-            mainGroup.rotation.y += (STATE.handRotation.y - mainGroup.rotation.y) * 0.1;
-            mainGroup.rotation.x += (STATE.handRotation.x - mainGroup.rotation.x) * 0.1;
+            // INCREASED INTERPOLATION FACTOR (0.1 -> 0.2) for faster catch-up
+            mainGroup.rotation.y += (STATE.handRotation.y - mainGroup.rotation.y) * 0.2;
+            mainGroup.rotation.x += (STATE.handRotation.x - mainGroup.rotation.x) * 0.2;
 
             // Idle Rotation if in TREE mode and no hand interaction (simple drift)
             if (STATE.mode === 'TREE' && Math.abs(STATE.handRotation.y) < 0.1) {
