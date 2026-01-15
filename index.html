@@ -37,10 +37,9 @@
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
-            touch-action: none; /* Prevent browser handling of gestures */
+            touch-action: none;
         }
 
-        /* WebGL Container */
         #canvas-container {
             position: fixed;
             top: 0;
@@ -58,7 +57,6 @@
             height: 100% !important;
         }
 
-        /* UI Containers */
         #ui-container {
             position: absolute;
             top: 0;
@@ -75,7 +73,6 @@
             pointer-events: none !important;
         }
 
-        /* Loader & Camera Loader */
         #loader, #camera-loader {
             position: fixed;
             top: 0;
@@ -94,7 +91,7 @@
         #camera-loader {
             background: rgba(0,0,0,0.9);
             z-index: 3000;
-            display: none; /* Hidden by default */
+            display: none;
         }
 
         #camera-loader.active {
@@ -122,7 +119,6 @@
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Start Modal & Help Modal */
         #start-modal, #help-modal {
             position: fixed;
             top: 0;
@@ -132,7 +128,7 @@
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            display: none; /* Hidden by default */
+            display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -192,7 +188,6 @@
             box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
         }
         
-        /* Guide Text */
         .guide-text p {
             font-size: 16px;
             margin: 15px 0;
@@ -208,13 +203,12 @@
             font-weight: bold;
             font-family: 'Cinzel', serif;
             margin-right: 10px;
-            min-width: 140px; /* Ensure alignment */
+            min-width: 140px;
             display: inline-flex;
             align-items: center;
             gap: 8px;
         }
 
-        /* Header */
         h1 {
             position: absolute;
             top: 20px;
@@ -232,7 +226,6 @@
             z-index: 20;
         }
 
-        /* Upload Controls */
         .upload-wrapper {
             position: absolute;
             bottom: 40px;
@@ -297,10 +290,9 @@
             border-color: #fff;
         }
 
-        /* Manual Controls */
         #manual-controls {
             position: absolute;
-            bottom: 140px; /* Shifted up */
+            bottom: 140px;
             right: 40px;
             display: flex;
             flex-direction: column;
@@ -331,76 +323,39 @@
             box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
         }
 
-        /* Computer Vision Hidden Container */
         #cv-container {
             position: absolute;
             bottom: 0;
             right: 0;
-            opacity: 0; /* Hidden */
+            opacity: 0;
             pointer-events: none;
             width: 160px;
             height: 120px;
         }
 
-        /* Mobile Responsive Adjustments */
         @media (max-width: 768px) {
-            h1 {
-                font-size: 36px;
-                top: 30px;
-            }
-
-            .modal-content {
-                padding: 20px;
-                width: 90%;
-            }
-            
-            .modal-title {
-                font-size: 24px;
-            }
-
-            .btn-modal {
-                width: 100%;
-                min-width: unset;
-            }
-
-            #manual-controls {
-                right: 50%;
-                transform: translateX(50%);
-                bottom: 150px;
-                flex-direction: row;
-                width: 90%;
-                justify-content: center;
-                gap: 10px;
-            }
-
-            .control-btn {
-                width: auto;
-                flex: 1;
-                font-size: 12px;
-                padding: 10px 5px;
-            }
-
-            .upload-wrapper {
-                bottom: 30px;
-            }
+            h1 { font-size: 36px; top: 30px; }
+            .modal-content { padding: 20px; width: 90%; }
+            .modal-title { font-size: 24px; }
+            .btn-modal { width: 100%; min-width: unset; }
+            #manual-controls { right: 50%; transform: translateX(50%); bottom: 150px; flex-direction: row; width: 90%; justify-content: center; gap: 10px; }
+            .control-btn { width: auto; flex: 1; font-size: 12px; padding: 10px 5px; }
+            .upload-wrapper { bottom: 30px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- App Loader -->
     <div id="loader">
         <div class="spinner"></div>
         <div class="loader-text">LOADING HOLIDAY MAGIC</div>
     </div>
 
-    <!-- Camera Loader Overlay -->
     <div id="camera-loader">
         <div class="spinner"></div>
         <div class="loader-text">CONNECTING TO SPIRITS...<br><span style="font-size: 11px; opacity: 0.7; font-family: sans-serif; margin-top:5px; display:block;">Please allow camera access</span></div>
     </div>
 
-    <!-- Start Modal -->
     <div id="start-modal">
         <div class="modal-content">
             <div class="modal-title">Choose Experience</div>
@@ -411,15 +366,14 @@
         </div>
     </div>
 
-    <!-- Help/Gesture Guide Modal -->
     <div id="help-modal">
         <div class="modal-content">
             <div class="modal-title">Gesture Guide</div>
             <div class="guide-text">
-                <p><span class="guide-highlight">🖐️ Open Hand</span> Scatter the stars (Scatter Mode)</p>
-                <p><span class="guide-highlight">✊ Closed Fist</span> Summon the tree (Tree Mode)</p>
-                <p><span class="guide-highlight">👌 Pinch</span> Focus on memories (Focus Mode)</p>
-                <p><span class="guide-highlight">👋 Move Hand</span> Rotate the scene</p>
+                <p><span class="guide-highlight">✊ Closed Fist</span> Summon the tree (合拢态)</p>
+                <p><span class="guide-highlight">🖐️ Open Hand</span> Scatter the stars (散开态)</p>
+                <p><span class="guide-highlight">👌 Grab/Pinch</span> Catch a memory (放大态)</p>
+                <p><span class="guide-highlight">👋 Move Hand</span> Adjust camera (手旋转视角)</p>
             </div>
             <div class="modal-buttons" style="margin-top: 30px;">
                 <button class="btn-modal" id="btn-close-help">Close</button>
@@ -427,7 +381,6 @@
         </div>
     </div>
 
-    <!-- UI Layer -->
     <div id="ui-container">
         <h1>Merry Christmas</h1>
 
@@ -440,7 +393,6 @@
             <a href="#" id="trigger-help" class="guide-link">Gesture Guide</a>
         </div>
 
-        <!-- Manual Controls (Hidden by default) -->
         <div id="manual-controls" class="ui-hidden">
             <button class="control-btn" data-mode="TREE">Tree</button>
             <button class="control-btn" data-mode="SCATTER">Scatter</button>
@@ -448,14 +400,11 @@
         </div>
     </div>
 
-    <!-- CV Container -->
     <div id="cv-container">
-        <!-- 'muted' is crucial for autoplay on iOS/Mobile Safari -->
         <video id="webcam" autoplay playsinline muted></video>
         <canvas id="output_canvas"></canvas>
     </div>
 
-    <!-- Application Script -->
     <script type="module">
         import * as THREE from 'three';
         import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -464,80 +413,59 @@
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 
-        // Detect Mobile
         const isMobile = window.innerWidth < 768;
 
-        // --- GLOBAL CONFIGURATION ---
-        // Reduce particle count on mobile for performance
         const CONFIG = {
             particleCount: isMobile ? 800 : 1500,
             dustCount: isMobile ? 1000 : 2500,
             treeHeight: 40,
             treeRadius: 15,
-            colors: { gold: 0xd4af37, green: 0x0f3b18, red: 0x8a0303, white: 0xffffff }
+            colors: { gold: 0xd4af37, green: 0x0f3b18, red: 0x8a0303, white: 0xffffff },
+            cameraDefaultZ: 50,
+            cameraFocusZ: 40
         };
 
         const STATE = {
-            mode: 'TREE', // TREE, SCATTER, FOCUS
+            mode: 'TREE',
             targetPhoto: null,
             handRotation: { x: 0, y: 0 },
             isManualMode: false,
-            cameraZ: 50 // Default target Z for zoom
+            cameraZ: CONFIG.cameraDefaultZ
         };
 
-        // --- GESTURE CONFIGURATION ---
-        // History buffer for hysteresis (debouncing)
         const GESTURE_HISTORY = [];
-        // Optimized to 5 frames for faster response time while maintaining stability
-        const HISTORY_SIZE = 5; 
-        // Increased smoothing factor for faster reaction (0.1 was too slow)
-        const ROTATION_SMOOTHING = 0.3;
+        const HISTORY_SIZE = 8; 
+        const ROTATION_SMOOTHING = 0.25;
 
-        // --- THREE.JS GLOBALS ---
         let camera, scene, renderer, composer;
         let mainGroup, particles = [], dustSystem;
         let photoObjects = [];
         const clock = new THREE.Clock();
 
-        // --- CV GLOBALS ---
         let handLandmarker = undefined;
-        let webcamRunning = false;
         const video = document.getElementById('webcam');
 
-        // --- INITIALIZATION ---
         async function init() {
-            // 1. Scene Setup
             const container = document.createElement('div');
-            container.id = 'canvas-container'; // Set ID for CSS styling
+            container.id = 'canvas-container';
             document.body.appendChild(container);
 
             scene = new THREE.Scene();
-
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 2, 50);
+            camera.position.set(0, 2, CONFIG.cameraDefaultZ);
 
-            // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap pixel ratio for performance
-            
-            // Critical fix for Mobile/iOS Edge: Pass false to updateStyle to prevent Three.js from 
-            // setting inline width/height styles that conflict with CSS 100% sizing.
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.setSize(window.innerWidth, window.innerHeight, false);
-            
             renderer.toneMapping = THREE.ReinhardToneMapping;
             renderer.toneMappingExposure = 2.2;
             container.appendChild(renderer.domElement);
 
-            // Environment
             const pmremGenerator = new THREE.PMREMGenerator(renderer);
             scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 
-            // Post-Processing
             const renderScene = new RenderPass(scene, camera);
-            const bloomPass = new UnrealBloomPass(
-                new THREE.Vector2(window.innerWidth, window.innerHeight),
-                1.5, 0.4, 0.85
-            );
+            const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
             bloomPass.strength = 0.45;
             bloomPass.radius = 0.4;
             bloomPass.threshold = 0.7;
@@ -545,10 +473,8 @@
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
             composer.addPass(bloomPass);
-            // Ensure composer size matches renderer
             composer.setSize(window.innerWidth, window.innerHeight);
 
-            // Lights
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambientLight);
 
@@ -560,27 +486,19 @@
             spotGold.angle = Math.PI / 4;
             scene.add(spotGold);
 
-            const spotBlue = new THREE.SpotLight(0x4444ff, 600);
-            spotBlue.position.set(-30, 20, -30);
-            scene.add(spotBlue);
-
-            // Container for rotation
             mainGroup = new THREE.Group();
             scene.add(mainGroup);
 
-            // 2. Generate Content
             createMaterials();
             generateParticles();
             generateDust();
             createDefaultPhoto();
 
-            // 3. Event Listeners
             window.addEventListener('resize', onWindowResize);
             document.addEventListener('keydown', onKeyDown);
             setupImageUpload();
-            setupZoomControls(); // Enable global zoom
+            setupZoomControls();
 
-            // Help Modal Handlers
             const helpModal = document.getElementById('help-modal');
             document.getElementById('trigger-help').addEventListener('click', (e) => {
                 e.preventDefault();
@@ -590,58 +508,28 @@
                 helpModal.classList.remove('visible');
             });
 
-            // 4. Mode Selection Flow
-            // Hide App Loader
             const loader = document.getElementById('loader');
             loader.style.opacity = '0';
             setTimeout(() => loader.remove(), 1000);
 
-            // Show Start Modal
             const startModal = document.getElementById('start-modal');
             startModal.classList.add('visible');
 
-            // Bind Modal Buttons - Critical Update for Mobile Permissions
             document.getElementById('btn-webcam').addEventListener('click', async () => {
-                // Show Camera Loading Overlay immediately
                 const cameraLoader = document.getElementById('camera-loader');
                 cameraLoader.classList.add('active');
-                
-                // Hide Start Modal
                 startModal.classList.remove('visible');
                 startModal.style.display = 'none';
 
-                // Request camera immediately within the user gesture event
                 try {
-                    // Check if supported
-                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                        throw new Error("Browser API not supported");
-                    }
-
-                    const constraints = {
-                        video: {
-                            facingMode: 'user',
-                            width: { ideal: 640 },
-                            height: { ideal: 480 }
-                        }
-                    };
-                    
-                    // This must happen directly in the click handler for iOS/Android
-                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
                     video.srcObject = stream;
-                    
-                    // Explicit play is often required after assigning srcObject
-                    await video.play().catch(e => console.log("Play error:", e));
-                    
-                    // Proceed to load AI model
+                    await video.play();
                     await startWebcamMode();
-                    
-                    // Hide Camera Loader only after everything is ready
                     cameraLoader.classList.remove('active');
-
                 } catch (err) {
-                    console.warn("Camera access failed:", err);
                     cameraLoader.classList.remove('active');
-                    alert("Camera access denied or not supported. Switching to Touch/Mouse mode.");
+                    alert("Camera access denied. Switching to Manual.");
                     startManualMode();
                 }
             });
@@ -656,310 +544,143 @@
         async function startWebcamMode() {
             STATE.isManualMode = false;
             try {
-                // Camera is already active, just load the model
                 await initMediaPipeModel();
-                
-                // Start prediction loop if model loaded and video ready
-                if (video.readyState >= 2) {
-                    predictWebcam();
-                } else {
-                    video.addEventListener("loadeddata", predictWebcam);
-                }
-            } catch (err) {
-                console.warn("Model Init Failed:", err);
-                throw err; // Throw to be caught by the caller to hide loader
-            }
+                if (video.readyState >= 2) predictWebcam();
+                else video.addEventListener("loadeddata", predictWebcam);
+            } catch (err) { console.error(err); }
             animate();
         }
 
         function startManualMode() {
             STATE.isManualMode = true;
-            // Show manual controls
-            const controls = document.getElementById('manual-controls');
-            controls.classList.remove('ui-hidden');
-
-            // Mouse Move for Rotation
+            document.getElementById('manual-controls').classList.remove('ui-hidden');
             window.addEventListener('mousemove', (e) => {
-                // If hovering over UI buttons, ignore rotation
                 if (e.target.closest('button, label, input, a')) return;
-
-                // If not pressing button (for desktop click-drag if we wanted it, 
-                // but here we follow 'head tracking style' simple hover)
-                const x = e.clientX / window.innerWidth;
-                const y = e.clientY / window.innerHeight;
-                
-                // Manual/Mouse Logic:
-                // Mouse Left (x=0) -> Should be CW (-1.5)
-                // (0 - 0.5) * k = -1.5 => k = 3.
-                STATE.handRotation.y = (x - 0.5) * 3; 
-                STATE.handRotation.x = (y - 0.5) * 2; 
+                STATE.handRotation.y = (e.clientX / window.innerWidth - 0.5) * 3; 
+                STATE.handRotation.x = (e.clientY / window.innerHeight - 0.5) * 2; 
             });
-
-            // Touch Move for Rotation
-            window.addEventListener('touchmove', (e) => {
-                // Ignore if touching UI
-                if (e.target.closest('button, label, input, a')) return;
-
-                // Prevent scrolling when interacting with the 3D scene
-                e.preventDefault(); 
-                
-                // Only rotate if SINGLE finger. 2 fingers is for Zoom.
-                if(e.touches.length === 1) {
-                    const x = e.touches[0].clientX / window.innerWidth;
-                    const y = e.touches[0].clientY / window.innerHeight;
-                    
-                    // Manual/Touch Logic: Same as mouse
-                    STATE.handRotation.y = (x - 0.5) * 3;
-                    STATE.handRotation.x = (y - 0.5) * 2;
-                }
-            }, { passive: false });
-
-            // Button Listeners
             const btns = document.querySelectorAll('.control-btn');
-            btns.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const mode = e.target.getAttribute('data-mode');
-                    if (mode) {
-                        setMode(mode);
-                        // Update active state visual
-                        btns.forEach(b => b.classList.remove('active'));
-                        e.target.classList.add('active');
-                    }
-                });
-                // Add touchstart for faster response on mobile
-                btn.addEventListener('touchstart', (e) => {
-                    e.stopPropagation(); // Prevent rotation logic from firing
-                    const mode = e.target.getAttribute('data-mode');
-                    if (mode) {
-                        setMode(mode);
-                        btns.forEach(b => b.classList.remove('active'));
-                        e.target.classList.add('active');
-                    }
-                }, { passive: true });
-            });
-
-            // Set initial active button
+            btns.forEach(btn => btn.addEventListener('click', (e) => {
+                const mode = e.target.getAttribute('data-mode');
+                if (mode) setMode(mode);
+                btns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+            }));
             btns[0].classList.add('active');
-
             animate();
         }
 
         function setupZoomControls() {
-            // Mouse Wheel
             window.addEventListener('wheel', (e) => {
-                // Allow scrolling if hovering UI (though usually overflow hidden)
                 if (e.target.closest('button, label, input, a')) return;
-                
                 e.preventDefault();
-                // Zoom amount based on wheel delta
-                const delta = e.deltaY * 0.05;
-                // Clamp target Z between 20 (close) and 100 (far)
-                STATE.cameraZ = THREE.MathUtils.clamp(STATE.cameraZ + delta, 20, 100);
-            }, { passive: false });
-
-            // Touch Pinch
-            let initialPinchDist = 0;
-            
-            window.addEventListener('touchstart', (e) => {
-                if (e.target.closest('button, label, input, a')) return;
-
-                if (e.touches.length === 2) {
-                    initialPinchDist = Math.hypot(
-                        e.touches[0].pageX - e.touches[1].pageX,
-                        e.touches[0].pageY - e.touches[1].pageY
-                    );
-                }
-            }, { passive: false });
-
-            window.addEventListener('touchmove', (e) => {
-                if (e.target.closest('button, label, input, a')) return;
-
-                if (e.touches.length === 2) {
-                    e.preventDefault();
-                    const currentDist = Math.hypot(
-                        e.touches[0].pageX - e.touches[1].pageX,
-                        e.touches[0].pageY - e.touches[1].pageY
-                    );
-                    
-                    // Difference in distance
-                    const diff = initialPinchDist - currentDist;
-                    
-                    // Sensitivity factor for touch zoom
-                    const sensitivity = 0.2; 
-                    
-                    // If diff is positive (pinching in/fingers closer), we want to INCREASE Z (Zoom out)
-                    // If diff is negative (spreading/fingers apart), we want to DECREASE Z (Zoom in)
-                    STATE.cameraZ = THREE.MathUtils.clamp(STATE.cameraZ + diff * sensitivity, 20, 100);
-                    
-                    initialPinchDist = currentDist;
-                }
+                STATE.cameraZ = THREE.MathUtils.clamp(STATE.cameraZ + e.deltaY * 0.05, 20, 100);
             }, { passive: false });
         }
 
         function setMode(mode) {
+            if (mode === STATE.mode) return;
+            
             if (mode === 'FOCUS') {
                 STATE.mode = 'FOCUS';
-                // Auto-center the view by resetting rotation state
                 STATE.handRotation.x = 0;
                 STATE.handRotation.y = 0;
-                
+                STATE.cameraZ = CONFIG.cameraFocusZ;
                 if (photoObjects.length > 0) {
                     STATE.targetPhoto = photoObjects[Math.floor(Math.random() * photoObjects.length)];
                 }
             } else {
+                if (STATE.mode === 'FOCUS') STATE.cameraZ = CONFIG.cameraDefaultZ;
                 STATE.mode = mode;
             }
         }
 
-        // --- ASSETS & MATERIALS ---
         let matGold, matGreen, matRed, matFrame, caneTexture;
-
         function createMaterials() {
             matGold = new THREE.MeshStandardMaterial({ color: CONFIG.colors.gold, roughness: 0.2, metalness: 0.9 });
             matGreen = new THREE.MeshStandardMaterial({ color: CONFIG.colors.green, roughness: 0.6, metalness: 0.1 });
             matRed = new THREE.MeshPhysicalMaterial({ color: CONFIG.colors.red, roughness: 0.2, metalness: 0.1, clearcoat: 1.0, clearcoatRoughness: 0.1 });
             matFrame = new THREE.MeshStandardMaterial({ color: CONFIG.colors.gold, roughness: 0.3, metalness: 0.8 });
-
-            // Procedural Candy Cane Texture
             const canvas = document.createElement('canvas');
-            canvas.width = 128;
-            canvas.height = 128;
+            canvas.width = 128; canvas.height = 128;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, 128, 128);
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 128, 128);
             ctx.fillStyle = '#ff0000';
             for(let i=-128; i<256; i+=32) {
-                ctx.beginPath();
-                ctx.moveTo(i, 0);
-                ctx.lineTo(i+16, 0);
-                ctx.lineTo(i+128+16, 128);
-                ctx.lineTo(i+128, 128);
-                ctx.fill();
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i+16, 0); ctx.lineTo(i+128+16, 128); ctx.lineTo(i+128, 128); ctx.fill();
             }
             caneTexture = new THREE.CanvasTexture(canvas);
-            caneTexture.wrapS = THREE.RepeatWrapping;
-            caneTexture.wrapT = THREE.RepeatWrapping;
+            caneTexture.wrapS = caneTexture.wrapT = THREE.RepeatWrapping;
         }
 
-        // --- PARTICLE CLASS ---
         class Particle {
             constructor(type, mesh, idx) {
                 this.type = type;
                 this.mesh = mesh;
                 this.idx = idx;
-                
-                // Allow explicit tree coordinate override for photos
                 this.treeConfig = null;
-
-                // State properties
                 this.originalScale = mesh.scale.clone();
                 this.targetPos = new THREE.Vector3();
                 this.targetRot = new THREE.Euler();
                 this.targetScale = this.originalScale.clone();
-                
-                // Random properties for scatter
                 this.scatterDir = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
                 this.scatterSpeed = Math.random() * 0.02;
                 this.scatterRadius = 8 + Math.random() * 12;
             }
 
-            update(mode, dt) {
-                // Calculate Target based on Mode
+            update(mode, dt, time) {
                 if (mode === 'TREE') {
-                    // Spiral Cone
                     let u, theta;
-                    
-                    if (this.treeConfig) {
-                        // Use customized random position for scattered photos
-                        u = this.treeConfig.u;
-                        theta = this.treeConfig.theta;
-                    } else {
-                        // Default spiral layout for ornaments
-                        u = this.idx / particles.length;
-                        theta = u * Math.PI * 40; // loops
-                    }
-
+                    if (this.treeConfig) { u = this.treeConfig.u; theta = this.treeConfig.theta; } 
+                    else { u = this.idx / particles.length; theta = u * Math.PI * 40; }
                     const y = (u - 0.5) * CONFIG.treeHeight;
                     const r = CONFIG.treeRadius * (1 - u);
-                    
-                    this.targetPos.set(
-                        r * Math.cos(theta),
-                        y,
-                        r * Math.sin(theta)
-                    );
-                    // Point outward
+                    this.targetPos.set(r * Math.cos(theta), y, r * Math.sin(theta));
                     this.targetRot.set(0, -theta, 0);
                     this.targetScale.copy(this.originalScale);
-
                 } else if (mode === 'SCATTER') {
-                    // Scatter sphere
-                    if(this.mesh.position.length() < 1) { // Initialize scatter pos if near center
-                        this.targetPos.copy(this.scatterDir).multiplyScalar(this.scatterRadius);
-                    }
-                    // Continuous rotation in scatter mode
+                    if(this.mesh.position.length() < 1) { this.targetPos.copy(this.scatterDir).multiplyScalar(this.scatterRadius); }
+                    else { this.targetPos.copy(this.scatterDir).multiplyScalar(this.scatterRadius + Math.sin(time + this.idx) * 2); }
                     this.mesh.rotation.x += this.scatterSpeed;
                     this.mesh.rotation.y += this.scatterSpeed;
                     this.targetScale.copy(this.originalScale);
-                    
                 } else if (mode === 'FOCUS') {
                     if (this.type === 'PHOTO' && this === STATE.targetPhoto) {
-                        // Center and huge
-                        this.targetPos.set(0, 0, 35);
-                        this.targetRot.set(0, 0, 0);
+                        const breath = Math.sin(time * 2) * 0.3;
+                        this.targetPos.set(0, breath, 5); 
+                        this.targetRot.set(Math.sin(time * 0.5) * 0.05, Math.cos(time * 0.5) * 0.05, 0);
                         this.targetScale.set(4.5, 4.5, 4.5);
                     } else {
-                        // Background noise
-                        this.targetPos.copy(this.scatterDir).multiplyScalar(this.scatterRadius * 2);
-                        this.targetScale.copy(this.originalScale).multiplyScalar(0.5);
+                        this.targetPos.copy(this.scatterDir).multiplyScalar(this.scatterRadius * 2.5);
+                        this.targetScale.copy(this.originalScale).multiplyScalar(0.3);
                     }
                 }
-
-                // Smoothly Lerp to Target (Rotation handling separate for SCATTER exception)
-                if (mode !== 'SCATTER' || (mode === 'SCATTER' && this.mesh.position.distanceTo(this.targetPos) > 1)) {
-                     this.mesh.position.lerp(this.targetPos, 0.05);
-                }
-
+                const lerpSpeed = mode === 'FOCUS' ? 0.08 : 0.06;
+                this.mesh.position.lerp(this.targetPos, lerpSpeed);
                 if (mode !== 'SCATTER') {
-                    // Manually lerp rotation using quaternions is better, but Euler is fine for this simple use
                     this.mesh.rotation.x += (this.targetRot.x - this.mesh.rotation.x) * 0.05;
                     this.mesh.rotation.y += (this.targetRot.y - this.mesh.rotation.y) * 0.05;
                     this.mesh.rotation.z += (this.targetRot.z - this.mesh.rotation.z) * 0.05;
                 }
-
                 this.mesh.scale.lerp(this.targetScale, 0.08);
             }
         }
 
-        // --- CONTENT GENERATION ---
         function generateParticles() {
-            const geoms = [
-                new THREE.BoxGeometry(0.8, 0.8, 0.8),
-                new THREE.SphereGeometry(0.5, 16, 16)
-            ];
-
-            // Candy Cane Geometry
-            const path = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(0, -1, 0),
-                new THREE.Vector3(0, 1, 0),
-                new THREE.Vector3(0.5, 1.5, 0),
-                new THREE.Vector3(1, 1, 0)
-            ]);
+            const geoms = [new THREE.BoxGeometry(0.8, 0.8, 0.8), new THREE.SphereGeometry(0.5, 16, 16)];
+            const path = new THREE.CatmullRomCurve3([new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0.5, 1.5, 0), new THREE.Vector3(1, 1, 0)]);
             const caneGeom = new THREE.TubeGeometry(path, 20, 0.15, 8, false);
-
             for (let i = 0; i < CONFIG.particleCount; i++) {
                 let mesh;
-                const rand = Math.random();
-                
-                if (rand < 0.6) { // Boxes and Spheres
+                if (Math.random() < 0.6) {
                     const geom = geoms[Math.floor(Math.random() * geoms.length)];
                     const mat = Math.random() > 0.5 ? matGold : (Math.random() > 0.5 ? matGreen : matRed);
                     mesh = new THREE.Mesh(geom, mat);
-                } else { // Candy Canes
+                } else {
                     const mat = new THREE.MeshStandardMaterial({ map: caneTexture, roughness: 0.3 });
                     mesh = new THREE.Mesh(caneGeom, mat);
                 }
-
-                mesh.position.set(0, -100, 0); // Start hidden
+                mesh.position.set((Math.random()-0.5)*100, -100, (Math.random()-0.5)*100);
                 mainGroup.add(mesh);
                 particles.push(new Particle('ORNAMENT', mesh, i));
             }
@@ -969,285 +690,133 @@
             const geom = new THREE.BufferGeometry();
             const pos = [];
             for (let i = 0; i < CONFIG.dustCount; i++) {
-                const r = 30 * Math.cbrt(Math.random());
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos(2 * Math.random() - 1);
-                pos.push(
-                    r * Math.sin(phi) * Math.cos(theta),
-                    r * Math.sin(phi) * Math.sin(theta),
-                    r * Math.cos(phi)
-                );
+                const r = 35 * Math.cbrt(Math.random());
+                const theta = Math.random() * Math.PI * 2, phi = Math.acos(2 * Math.random() - 1);
+                pos.push(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
             }
             geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-            const mat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1, transparent: true, opacity: 0.6 });
-            dustSystem = new THREE.Points(geom, mat);
+            dustSystem = new THREE.Points(geom, new THREE.PointsMaterial({ color: 0xffffff, size: 0.1, transparent: true, opacity: 0.5 }));
             mainGroup.add(dustSystem);
         }
 
         function createDefaultPhoto() {
             const canvas = document.createElement('canvas');
-            canvas.width = 512;
-            canvas.height = 512;
+            canvas.width = canvas.height = 512;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#1a0505';
-            ctx.fillRect(0,0,512,512);
-            ctx.strokeStyle = '#d4af37';
-            ctx.lineWidth = 20;
-            ctx.strokeRect(20,20,472,472);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 60px Cinzel';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText("JOYEUX", 256, 200);
-            ctx.fillText("NOEL", 256, 280);
-            
-            const tex = new THREE.CanvasTexture(canvas);
-            tex.colorSpace = THREE.SRGBColorSpace;
+            ctx.fillStyle = '#1a0505'; ctx.fillRect(0,0,512,512);
+            ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 20; ctx.strokeRect(20,20,472,472);
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 60px Cinzel'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText("JOYEUX", 256, 200); ctx.fillText("NOEL", 256, 280);
+            const tex = new THREE.CanvasTexture(canvas); tex.colorSpace = THREE.SRGBColorSpace;
             addPhotoToScene(tex);
         }
 
         function addPhotoToScene(texture) {
             const geometry = new THREE.BoxGeometry(3, 3, 0.2);
-            // Materials: [Right, Left, Top, Bottom, Front, Back]
-            const materials = [
-                matFrame, matFrame, matFrame, matFrame,
-                new THREE.MeshBasicMaterial({ map: texture }), // Front
-                matFrame
-            ];
+            const materials = [matFrame, matFrame, matFrame, matFrame, new THREE.MeshBasicMaterial({ map: texture }), matFrame];
             const mesh = new THREE.Mesh(geometry, materials);
             mainGroup.add(mesh);
-            
             const p = new Particle('PHOTO', mesh, particles.length);
-            
-            // Randomly scatter new photos on the tree instead of stacking at top
-            // Avoid extreme top/bottom (0.1 to 0.9)
-            const randomU = 0.1 + Math.random() * 0.8;
-            const randomTheta = Math.random() * Math.PI * 2;
-            
-            p.treeConfig = { u: randomU, theta: randomTheta };
-            
+            p.treeConfig = { u: 0.1 + Math.random() * 0.8, theta: Math.random() * Math.PI * 2 };
             particles.push(p);
             photoObjects.push(p);
         }
 
         function setupImageUpload() {
-            const input = document.getElementById('imageInput');
-            input.addEventListener('change', (e) => {
-                const files = e.target.files;
-                if (!files || files.length === 0) return;
-                
-                // Iterate through all selected files
-                Array.from(files).forEach(f => {
-                     const reader = new FileReader();
-                        reader.onload = (ev) => {
-                            new THREE.TextureLoader().load(ev.target.result, (t) => {
-                                t.colorSpace = THREE.SRGBColorSpace;
-                                addPhotoToScene(t);
-                            });
-                        }
-                        reader.readAsDataURL(f);
+            document.getElementById('imageInput').addEventListener('change', (e) => {
+                Array.from(e.target.files).forEach(f => {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => new THREE.TextureLoader().load(ev.target.result, (t) => { t.colorSpace = THREE.SRGBColorSpace; addPhotoToScene(t); });
+                    reader.readAsDataURL(f);
                 });
             });
         }
 
-        // --- COMPUTER VISION LOGIC ---
-        // Renamed and streamlined: Only initializes the AI model
         async function initMediaPipeModel() {
-            try {
-                const vision = await FilesetResolver.forVisionTasks(
-                    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
-                );
-                
-                handLandmarker = await HandLandmarker.createFromOptions(vision, {
-                    baseOptions: {
-                        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
-                        delegate: "GPU"
-                    },
-                    runningMode: "VIDEO",
-                    numHands: 1
-                });
-                
-            } catch (error) {
-                console.error("Failed to initialize MediaPipe:", error);
-                throw error; // Rethrow to trigger fallback
-            }
+            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
+            handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate: "GPU" },
+                runningMode: "VIDEO", numHands: 1
+            });
         }
 
-        let lastVideoTime = -1;
         async function predictWebcam() {
             if (video.currentTime !== lastVideoTime) {
                 lastVideoTime = video.currentTime;
-                const startTimeMs = performance.now();
-                
                 if (handLandmarker && video.srcObject && video.readyState >= 2) { 
                     try {
-                        const result = handLandmarker.detectForVideo(video, startTimeMs);
+                        const result = handLandmarker.detectForVideo(video, performance.now());
                         processGestures(result);
-                    } catch (e) {
-                        // Ignore occasional runtime frame errors
-                    }
+                    } catch (e) {}
                 }
             }
-            if (!STATE.isManualMode) {
-                requestAnimationFrame(predictWebcam);
-            }
+            if (!STATE.isManualMode) requestAnimationFrame(predictWebcam);
         }
 
+        let lastVideoTime = -1;
         function processGestures(result) {
             if (result.landmarks && result.landmarks.length > 0) {
-                const lm = result.landmarks[0]; 
-
-                // --- 1. SMOOTH ROTATION ---
-                // MODIFIED: Logic to lock rotation when in FOCUS mode
-                if (STATE.mode === 'FOCUS') {
-                    // Lock to center (0,0) to keep photo steady
-                    // We interpolate towards 0 to avoid snapping
-                    STATE.handRotation.y += (0 - STATE.handRotation.y) * 0.1;
-                    STATE.handRotation.x += (0 - STATE.handRotation.x) * 0.1;
-                } else {
-                    // Normal hand tracking for rotation
-                    // Center of palm (approx landmark 9)
-                    const palmX = lm[9].x;
-                    const palmY = lm[9].y;
-                    
-                    // Target rotation based on hand position
-                    // Webcam Logic: 
-                    // Hand Left (Real) -> Image Right (x=1) -> Should be CW (-1.5)
-                    // (1 - 0.5) * k = -1.5 => k = -3.
-                    const targetRotY = (palmX - 0.5) * -3; 
-                    
-                    // Vertical Rotation Fix:
-                    // Hand Up (y near 0) -> See Bottom -> Tree Rot X Negative
-                    // (0 - 0.5) * k = negative -> k is positive.
-                    // Previous was * -2 (resulting in positive RotX -> See Top).
-                    // New is * 2.
-                    const targetRotX = (palmY - 0.5) * 2; 
-
-                    // Apply Exponential Moving Average (EMA) for silky smooth rotation
-                    STATE.handRotation.y += (targetRotY - STATE.handRotation.y) * ROTATION_SMOOTHING;
-                    STATE.handRotation.x += (targetRotX - STATE.handRotation.x) * ROTATION_SMOOTHING;
-                }
-
-                // --- 2. GESTURE RECOGNITION WITH PRIORITY ---
+                const lm = result.landmarks[0];
                 const wrist = new THREE.Vector3(lm[0].x, lm[0].y, lm[0].z);
                 const thumbTip = new THREE.Vector3(lm[4].x, lm[4].y, lm[4].z);
                 const indexTip = new THREE.Vector3(lm[8].x, lm[8].y, lm[8].z);
+                
+                const palmX = lm[9].x, palmY = lm[9].y;
+                const targetRotY = (palmX - 0.5) * -3;
+                const targetRotX = (palmY - 0.5) * 2;
+                
+                STATE.handRotation.y += (targetRotY - STATE.handRotation.y) * ROTATION_SMOOTHING;
+                STATE.handRotation.x += (targetRotX - STATE.handRotation.x) * ROTATION_SMOOTHING;
 
                 const pinchDist = thumbTip.distanceTo(indexTip);
                 const indexWristDist = indexTip.distanceTo(wrist);
-                
-                // Average distance of Middle, Ring, Pinky to wrist
-                // Using specific fingers helps distinguish "Pinch" (Index+Thumb) from "Fist" (All curled)
-                const tips = [12, 16, 20];
                 let otherFingersDist = 0;
-                tips.forEach(t => {
-                    const v = new THREE.Vector3(lm[t].x, lm[t].y, lm[t].z);
-                    otherFingersDist += v.distanceTo(wrist);
-                });
+                [12, 16, 20].forEach(t => otherFingersDist += new THREE.Vector3(lm[t].x, lm[t].y, lm[t].z).distanceTo(wrist));
                 otherFingersDist /= 3;
 
-                // Determine Instantaneous Candidate
-                let candidate = STATE.mode; 
+                let candidate = STATE.mode;
+                // Grab/Pinch -> Focus
+                if (pinchDist < 0.05 && indexWristDist > 0.2) candidate = 'FOCUS';
+                // Fist -> Tree
+                else if (otherFingersDist < 0.18) candidate = 'TREE';
+                // Open Hand -> Scatter
+                else if (otherFingersDist > 0.4) candidate = 'SCATTER';
 
-                // --- PRIORITY LOGIC ---
-                // 1. PINCH (Focus): 
-                //    Condition: Thumb & Index close (< 0.06), BUT Index must be extended relative to wrist (> 0.2).
-                //    This prevents a tight fist (where thumb covers index) from being seen as a pinch.
-                if (pinchDist < 0.06 && indexWristDist > 0.2) {
-                    candidate = 'FOCUS';
-                }
-                // 2. FIST (Tree): 
-                //    Condition: Non-index fingers curled tight (< 0.25) AND Index also curled (< 0.25).
-                else if (otherFingersDist < 0.25) { 
-                    if (indexWristDist < 0.25) {
-                        candidate = 'TREE';
-                    }
-                } 
-                // 3. OPEN (Scatter):
-                //    Condition: Fingers clearly extended.
-                else if (otherFingersDist > 0.35) {
-                    candidate = 'SCATTER';
-                }
-
-                // --- 3. HYSTERESIS / DEBOUNCING ---
                 GESTURE_HISTORY.push(candidate);
-                if (GESTURE_HISTORY.length > HISTORY_SIZE) {
-                    GESTURE_HISTORY.shift();
-                }
+                if (GESTURE_HISTORY.length > HISTORY_SIZE) GESTURE_HISTORY.shift();
 
-                // Calculate consensus
-                // We only switch if a specific gesture appears in >70% of the history frames
-                const counts = {};
-                let maxCount = 0;
-                let consensus = null;
-                
+                const counts = {}; let maxCount = 0, consensus = null;
                 for (const g of GESTURE_HISTORY) {
                     counts[g] = (counts[g] || 0) + 1;
-                    if (counts[g] > maxCount) {
-                        maxCount = counts[g];
-                        consensus = g;
-                    }
+                    if (counts[g] > maxCount) { maxCount = counts[g]; consensus = g; }
                 }
 
-                // Apply switch if consensus is strong and different from current state
                 if (consensus && consensus !== STATE.mode && maxCount >= HISTORY_SIZE * 0.7) {
                     setMode(consensus);
-                    // Clear history to prevent rapid bouncing
-                    GESTURE_HISTORY.length = 0; 
+                    GESTURE_HISTORY.length = 0;
                 }
             }
         }
 
-        // --- ANIMATION LOOP ---
         function animate() {
             requestAnimationFrame(animate);
-
-            const dt = clock.getDelta();
-
-            // Apply Hand Rotation Influence
-            // Lerp mainGroup towards the (already smoothed) STATE.handRotation
-            // INCREASED INTERPOLATION FACTOR (0.1 -> 0.2) for faster catch-up
-            mainGroup.rotation.y += (STATE.handRotation.y - mainGroup.rotation.y) * 0.2;
-            mainGroup.rotation.x += (STATE.handRotation.x - mainGroup.rotation.x) * 0.2;
-
-            // Idle Rotation if in TREE mode and no hand interaction (simple drift)
-            if (STATE.mode === 'TREE' && Math.abs(STATE.handRotation.y) < 0.1) {
-                mainGroup.rotation.y += 0.002;
-            }
-
-            // Smooth Camera Zoom interpolation
-            camera.position.z += (STATE.cameraZ - camera.position.z) * 0.1;
-
-            // Update Particles
-            particles.forEach(p => p.update(STATE.mode, dt));
-
-            // Dust Animation
-            if (dustSystem) {
-                dustSystem.rotation.y -= 0.005;
-            }
-
+            const dt = clock.getDelta(), time = clock.getElapsedTime();
+            mainGroup.rotation.y += (STATE.handRotation.y - mainGroup.rotation.y) * 0.15;
+            mainGroup.rotation.x += (STATE.handRotation.x - mainGroup.rotation.x) * 0.15;
+            if (STATE.mode === 'TREE' && Math.abs(STATE.handRotation.y) < 0.05) mainGroup.rotation.y += 0.003;
+            camera.position.z += (STATE.cameraZ - camera.position.z) * 0.08;
+            particles.forEach(p => p.update(STATE.mode, dt, time));
+            if (dustSystem) dustSystem.rotation.y -= 0.002;
             composer.render();
         }
 
-        // --- EVENTS ---
         function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            // Critical: pass false to updateStyle to keep CSS 100% working
-            renderer.setSize(window.innerWidth, window.innerHeight, false);
-            composer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight, false); composer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        function onKeyDown(e) {
-            if (e.key.toLowerCase() === 'h') {
-                const ui = document.getElementById('ui-container');
-                ui.classList.toggle('ui-hidden');
-            }
-        }
-
-        // Initialize
+        function onKeyDown(e) { if (e.key.toLowerCase() === 'h') document.getElementById('ui-container').classList.toggle('ui-hidden'); }
         init();
-
     </script>
 </body>
 </html>
