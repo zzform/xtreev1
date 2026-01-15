@@ -422,7 +422,7 @@
             treeRadius: 15,
             colors: { gold: 0xd4af37, green: 0x0f3b18, red: 0x8a0303, white: 0xffffff },
             cameraDefaultZ: 50,
-            cameraFocusZ: 40
+            cameraFocusZ: 42
         };
 
         const STATE = {
@@ -434,8 +434,10 @@
         };
 
         const GESTURE_HISTORY = [];
-        const HISTORY_SIZE = 8; 
-        const ROTATION_SMOOTHING = 0.25;
+        // Reduced HISTORY_SIZE for faster response
+        const HISTORY_SIZE = 4; 
+        // Faster rotation following
+        const ROTATION_SMOOTHING = 0.4;
 
         let camera, scene, renderer, composer;
         let mainGroup, particles = [], dustSystem;
@@ -443,6 +445,7 @@
         const clock = new THREE.Clock();
 
         let handLandmarker = undefined;
+        let lastVideoTime = -1;
         const video = document.getElementById('webcam');
 
         async function init() {
@@ -651,18 +654,21 @@
                         this.targetRot.set(Math.sin(time * 0.5) * 0.05, Math.cos(time * 0.5) * 0.05, 0);
                         this.targetScale.set(4.5, 4.5, 4.5);
                     } else {
-                        this.targetPos.copy(this.scatterDir).multiplyScalar(this.scatterRadius * 2.5);
-                        this.targetScale.copy(this.originalScale).multiplyScalar(0.3);
+                        this.targetPos.copy(this.scatterDir).multiplyScalar(this.scatterRadius * 2.8);
+                        this.targetScale.copy(this.originalScale).multiplyScalar(0.2);
                     }
                 }
-                const lerpSpeed = mode === 'FOCUS' ? 0.08 : 0.06;
+                
+                // Snappier lerp speed
+                const lerpSpeed = mode === 'FOCUS' ? 0.12 : 0.1;
                 this.mesh.position.lerp(this.targetPos, lerpSpeed);
+                
                 if (mode !== 'SCATTER') {
-                    this.mesh.rotation.x += (this.targetRot.x - this.mesh.rotation.x) * 0.05;
-                    this.mesh.rotation.y += (this.targetRot.y - this.mesh.rotation.y) * 0.05;
-                    this.mesh.rotation.z += (this.targetRot.z - this.mesh.rotation.z) * 0.05;
+                    this.mesh.rotation.x += (this.targetRot.x - this.mesh.rotation.x) * 0.1;
+                    this.mesh.rotation.y += (this.targetRot.y - this.mesh.rotation.y) * 0.1;
+                    this.mesh.rotation.z += (this.targetRot.z - this.mesh.rotation.z) * 0.1;
                 }
-                this.mesh.scale.lerp(this.targetScale, 0.08);
+                this.mesh.scale.lerp(this.targetScale, 0.15);
             }
         }
 
@@ -753,7 +759,6 @@
             if (!STATE.isManualMode) requestAnimationFrame(predictWebcam);
         }
 
-        let lastVideoTime = -1;
         function processGestures(result) {
             if (result.landmarks && result.landmarks.length > 0) {
                 const lm = result.landmarks[0];
@@ -765,6 +770,7 @@
                 const targetRotY = (palmX - 0.5) * -3;
                 const targetRotX = (palmY - 0.5) * 2;
                 
+                // Rotate immediately for better feel
                 STATE.handRotation.y += (targetRotY - STATE.handRotation.y) * ROTATION_SMOOTHING;
                 STATE.handRotation.x += (targetRotX - STATE.handRotation.x) * ROTATION_SMOOTHING;
 
@@ -775,12 +781,10 @@
                 otherFingersDist /= 3;
 
                 let candidate = STATE.mode;
-                // Grab/Pinch -> Focus
-                if (pinchDist < 0.05 && indexWristDist > 0.2) candidate = 'FOCUS';
-                // Fist -> Tree
-                else if (otherFingersDist < 0.18) candidate = 'TREE';
-                // Open Hand -> Scatter
-                else if (otherFingersDist > 0.4) candidate = 'SCATTER';
+                // Refined Thresholds
+                if (pinchDist < 0.05 && indexWristDist > 0.18) candidate = 'FOCUS';
+                else if (otherFingersDist < 0.2) candidate = 'TREE';
+                else if (otherFingersDist > 0.38) candidate = 'SCATTER';
 
                 GESTURE_HISTORY.push(candidate);
                 if (GESTURE_HISTORY.length > HISTORY_SIZE) GESTURE_HISTORY.shift();
@@ -791,7 +795,8 @@
                     if (counts[g] > maxCount) { maxCount = counts[g]; consensus = g; }
                 }
 
-                if (consensus && consensus !== STATE.mode && maxCount >= HISTORY_SIZE * 0.7) {
+                // consensus threshold 0.75 of 4 is 3 frames.
+                if (consensus && consensus !== STATE.mode && maxCount >= HISTORY_SIZE * 0.75) {
                     setMode(consensus);
                     GESTURE_HISTORY.length = 0;
                 }
@@ -801,10 +806,16 @@
         function animate() {
             requestAnimationFrame(animate);
             const dt = clock.getDelta(), time = clock.getElapsedTime();
-            mainGroup.rotation.y += (STATE.handRotation.y - mainGroup.rotation.y) * 0.15;
-            mainGroup.rotation.x += (STATE.handRotation.x - mainGroup.rotation.x) * 0.15;
+            
+            // Increased responsiveness in movement
+            mainGroup.rotation.y += (STATE.handRotation.y - mainGroup.rotation.y) * 0.3;
+            mainGroup.rotation.x += (STATE.handRotation.x - mainGroup.rotation.x) * 0.3;
+            
             if (STATE.mode === 'TREE' && Math.abs(STATE.handRotation.y) < 0.05) mainGroup.rotation.y += 0.003;
-            camera.position.z += (STATE.cameraZ - camera.position.z) * 0.08;
+            
+            // Snappier camera zoom
+            camera.position.z += (STATE.cameraZ - camera.position.z) * 0.2;
+            
             particles.forEach(p => p.update(STATE.mode, dt, time));
             if (dustSystem) dustSystem.rotation.y -= 0.002;
             composer.render();
