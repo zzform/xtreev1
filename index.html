@@ -323,14 +323,36 @@
             box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
         }
 
+        /* Preview Window Styles */
         #cv-container {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            opacity: 0;
-            pointer-events: none;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
             width: 160px;
             height: 120px;
+            border: 1px solid var(--gold);
+            background: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+            overflow: hidden;
+            border-radius: 4px;
+            z-index: 1000;
+            display: none;
+            pointer-events: none;
+        }
+
+        #cv-container.active {
+            display: block;
+        }
+
+        #webcam {
+            display: none;
+        }
+
+        #output_canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror feedback */
         }
 
         @media (max-width: 768px) {
@@ -341,6 +363,7 @@
             #manual-controls { right: 50%; transform: translateX(50%); bottom: 150px; flex-direction: row; width: 90%; justify-content: center; gap: 10px; }
             .control-btn { width: auto; flex: 1; font-size: 12px; padding: 10px 5px; }
             .upload-wrapper { bottom: 30px; }
+            #cv-container { width: 120px; height: 90px; bottom: 10px; left: 10px; }
         }
     </style>
 </head>
@@ -416,7 +439,6 @@
         const isMobile = window.innerWidth < 768;
 
         const CONFIG = {
-            // Particle count increased by 40% (from 432/840 to ~600/1180) for a denser tree
             particleCount: isMobile ? 600 : 1180,
             dustCount: isMobile ? 600 : 1500,
             treeHeight: 40,
@@ -446,6 +468,8 @@
         let handLandmarker = undefined;
         let lastVideoTime = -1;
         const video = document.getElementById('webcam');
+        const canvasElement = document.getElementById('output_canvas');
+        const canvasCtx = canvasElement.getContext('2d');
 
         async function init() {
             const container = document.createElement('div');
@@ -527,6 +551,9 @@
                     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
                     video.srcObject = stream;
                     await video.play();
+                    
+                    document.getElementById('cv-container').classList.add('active');
+                    
                     await startWebcamMode();
                     cameraLoader.classList.remove('active');
                 } catch (err) {
@@ -555,6 +582,7 @@
 
         function startManualMode() {
             STATE.isManualMode = true;
+            document.getElementById('cv-container').classList.remove('active');
             document.getElementById('manual-controls').classList.remove('ui-hidden');
             window.addEventListener('mousemove', (e) => {
                 if (e.target.closest('button, label, input, a')) return;
@@ -622,23 +650,15 @@
                 this.type = type;
                 this.mesh = mesh;
                 this.idx = idx;
-
-                // Base stratigraphic height and random angle for uniform coverage
                 this.randomU = Math.random(); 
                 this.randomTheta = Math.random() * Math.PI * 2; 
-                
-                // Jitter refined for "naturally uniform" look
                 this.jitter = {
                     radiusOffset: (Math.random() - 0.5) * 3.5, 
                     heightOffset: (Math.random() - 0.5) * 2.0,
                     angleOffset: (Math.random() - 0.5) * 0.8
                 };
-
                 this.treeConfig = null;
-                
-                // Sizes maintained at a consistent level
                 this.originalScale = mesh.scale.clone();
-                
                 this.targetPos = new THREE.Vector3();
                 this.targetRot = new THREE.Euler();
                 this.targetScale = this.originalScale.clone();
@@ -651,16 +671,13 @@
                 if (mode === 'TREE') {
                     let u = this.randomU;
                     let theta = this.randomTheta + this.jitter.angleOffset;
-
                     if (this.treeConfig) { 
                         u = this.treeConfig.u; 
                         theta = this.treeConfig.theta; 
                     }
-                    
                     const y = (u - 0.5) * CONFIG.treeHeight + (this.treeConfig ? 0 : this.jitter.heightOffset);
                     const baseR = CONFIG.treeRadius * (1 - u);
                     const r = baseR + (this.treeConfig ? 0 : this.jitter.radiusOffset);
-                    
                     this.targetPos.set(r * Math.cos(theta), y, r * Math.sin(theta));
                     this.targetRot.set(0, -theta, 0);
                     this.targetScale.copy(this.originalScale);
@@ -684,10 +701,8 @@
                         this.targetScale.copy(this.originalScale).multiplyScalar(0.2);
                     }
                 }
-                
                 const lerpSpeed = mode === 'FOCUS' ? 0.12 : 0.08;
                 this.mesh.position.lerp(this.targetPos, lerpSpeed);
-                
                 if (mode !== 'SCATTER') {
                     this.mesh.rotation.x += (this.targetRot.x - this.mesh.rotation.x) * 0.1;
                     this.mesh.rotation.y += (this.targetRot.y - this.mesh.rotation.y) * 0.1;
@@ -712,7 +727,6 @@
                 let mesh;
                 let type = 'ORNAMENT';
                 const rand = Math.random();
-
                 if (rand < 0.5) {
                     mesh = new THREE.Mesh(ballGeom, [matGold, matRed, matWhite, matGreen][Math.floor(Math.random()*4)]);
                     type = 'ORNAMENT_BALL';
@@ -723,21 +737,14 @@
                     mesh = new THREE.Mesh(caneGeom, m);
                     mesh.scale.set(0.8, 0.8, 0.8);
                 }
-                
-                // Initial randomized position
                 mesh.position.set((Math.random()-0.5)*400, -200 - Math.random()*200, (Math.random()-0.5)*400);
                 mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
                 mainGroup.add(mesh);
-                
                 const p = new Particle(type, mesh, i);
-                // Stratify height for more uniform but natural scatter
                 p.randomU = i / CONFIG.particleCount;
                 p.randomTheta = Math.random() * Math.PI * 2;
-                
                 particles.push(p);
             }
-            
-            // Randomize order for the height stratification to feel natural
             for (let i = particles.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 const tempU = particles[i].randomU;
@@ -779,19 +786,15 @@
             ];
             const mesh = new THREE.Mesh(geometry, materials);
             mainGroup.add(mesh);
-            
             const isFirst = photoObjects.length === 0;
             const p = new Particle('PHOTO', mesh, particles.length);
-            
             if (isFirst) {
-                // Peak position (u=1.0)
                 p.treeConfig = { u: 1.05, theta: 0 }; 
                 p.originalScale.multiplyScalar(1.2); 
             } else {
                 p.randomU = 0.1 + Math.random() * 0.8;
                 p.randomTheta = Math.random() * Math.PI * 2;
             }
-            
             particles.push(p);
             photoObjects.push(p);
         }
@@ -820,12 +823,55 @@
             });
         }
 
+        function drawLandmarks(landmarks) {
+            if (!landmarks || landmarks.length === 0) return;
+            
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+            
+            for (const landmark of landmarks) {
+                // Draw connections
+                const connections = HandLandmarker.HAND_CONNECTIONS;
+                canvasCtx.strokeStyle = "#d4af37";
+                canvasCtx.lineWidth = 2;
+                for (const connection of connections) {
+                    const from = landmark[connection.start];
+                    const to = landmark[connection.end];
+                    canvasCtx.beginPath();
+                    canvasCtx.moveTo(from.x * canvasElement.width, from.y * canvasElement.height);
+                    canvasCtx.lineTo(to.x * canvasElement.width, to.y * canvasElement.height);
+                    canvasCtx.stroke();
+                }
+
+                // Draw points
+                canvasCtx.fillStyle = "#ffffff";
+                for (const point of landmark) {
+                    canvasCtx.beginPath();
+                    canvasCtx.arc(point.x * canvasElement.width, point.y * canvasElement.height, 3, 0, 2 * Math.PI);
+                    canvasCtx.fill();
+                }
+            }
+            canvasCtx.restore();
+        }
+
         async function predictWebcam() {
             if (video.currentTime !== lastVideoTime) {
                 lastVideoTime = video.currentTime;
+                
+                // Adjust canvas size once if needed
+                if (canvasElement.width !== video.videoWidth) {
+                    canvasElement.width = video.videoWidth;
+                    canvasElement.height = video.videoHeight;
+                }
+
                 if (handLandmarker && video.srcObject && video.readyState >= 2) { 
                     try {
                         const result = handLandmarker.detectForVideo(video, performance.now());
+                        
+                        // Draw feedback to UI
+                        drawLandmarks(result.landmarks);
+                        
                         processGestures(result);
                     } catch (e) {}
                 }
@@ -873,6 +919,9 @@
                     setMode(consensus);
                     GESTURE_HISTORY.length = 0;
                 }
+            } else {
+                // If no hand is detected, clear feedback canvas but keep video frame
+                canvasCtx.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
             }
         }
 
