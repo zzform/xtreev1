@@ -416,11 +416,12 @@
         const isMobile = window.innerWidth < 768;
 
         const CONFIG = {
-            particleCount: isMobile ? 800 : 1500,
-            dustCount: isMobile ? 1000 : 2500,
+            // Particle count increased by 40% (from 432/840 to ~600/1180) for a denser tree
+            particleCount: isMobile ? 600 : 1180,
+            dustCount: isMobile ? 600 : 1500,
             treeHeight: 40,
             treeRadius: 15,
-            colors: { gold: 0xd4af37, green: 0x0f3b18, red: 0x8a0303, white: 0xffffff },
+            colors: { gold: 0xd4af37, green: 0x0f3b18, red: 0x8a0303, white: 0xeeeeee },
             cameraDefaultZ: 50,
             cameraFocusZ: 42
         };
@@ -434,9 +435,7 @@
         };
 
         const GESTURE_HISTORY = [];
-        // Reduced HISTORY_SIZE for faster response
         const HISTORY_SIZE = 4; 
-        // Faster rotation following
         const ROTATION_SMOOTHING = 0.4;
 
         let camera, scene, renderer, composer;
@@ -598,12 +597,14 @@
             }
         }
 
-        let matGold, matGreen, matRed, matFrame, caneTexture;
+        let matGold, matGreen, matRed, matFrame, caneTexture, matWhite;
         function createMaterials() {
             matGold = new THREE.MeshStandardMaterial({ color: CONFIG.colors.gold, roughness: 0.2, metalness: 0.9 });
             matGreen = new THREE.MeshStandardMaterial({ color: CONFIG.colors.green, roughness: 0.6, metalness: 0.1 });
             matRed = new THREE.MeshPhysicalMaterial({ color: CONFIG.colors.red, roughness: 0.2, metalness: 0.1, clearcoat: 1.0, clearcoatRoughness: 0.1 });
+            matWhite = new THREE.MeshStandardMaterial({ color: CONFIG.colors.white, roughness: 0.5 });
             matFrame = new THREE.MeshStandardMaterial({ color: CONFIG.colors.gold, roughness: 0.3, metalness: 0.8 });
+            
             const canvas = document.createElement('canvas');
             canvas.width = 128; canvas.height = 128;
             const ctx = canvas.getContext('2d');
@@ -621,29 +622,54 @@
                 this.type = type;
                 this.mesh = mesh;
                 this.idx = idx;
+
+                // Base stratigraphic height and random angle for uniform coverage
+                this.randomU = Math.random(); 
+                this.randomTheta = Math.random() * Math.PI * 2; 
+                
+                // Jitter refined for "naturally uniform" look
+                this.jitter = {
+                    radiusOffset: (Math.random() - 0.5) * 3.5, 
+                    heightOffset: (Math.random() - 0.5) * 2.0,
+                    angleOffset: (Math.random() - 0.5) * 0.8
+                };
+
                 this.treeConfig = null;
+                
+                // Sizes maintained at a consistent level
                 this.originalScale = mesh.scale.clone();
+                
                 this.targetPos = new THREE.Vector3();
                 this.targetRot = new THREE.Euler();
                 this.targetScale = this.originalScale.clone();
                 this.scatterDir = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
-                this.scatterSpeed = Math.random() * 0.02;
-                this.scatterRadius = 8 + Math.random() * 12;
+                this.scatterSpeed = 0.01 + Math.random() * 0.02;
+                this.scatterRadius = 18 + Math.random() * 15;
             }
 
             update(mode, dt, time) {
                 if (mode === 'TREE') {
-                    let u, theta;
-                    if (this.treeConfig) { u = this.treeConfig.u; theta = this.treeConfig.theta; } 
-                    else { u = this.idx / particles.length; theta = u * Math.PI * 40; }
-                    const y = (u - 0.5) * CONFIG.treeHeight;
-                    const r = CONFIG.treeRadius * (1 - u);
+                    let u = this.randomU;
+                    let theta = this.randomTheta + this.jitter.angleOffset;
+
+                    if (this.treeConfig) { 
+                        u = this.treeConfig.u; 
+                        theta = this.treeConfig.theta; 
+                    }
+                    
+                    const y = (u - 0.5) * CONFIG.treeHeight + (this.treeConfig ? 0 : this.jitter.heightOffset);
+                    const baseR = CONFIG.treeRadius * (1 - u);
+                    const r = baseR + (this.treeConfig ? 0 : this.jitter.radiusOffset);
+                    
                     this.targetPos.set(r * Math.cos(theta), y, r * Math.sin(theta));
                     this.targetRot.set(0, -theta, 0);
                     this.targetScale.copy(this.originalScale);
                 } else if (mode === 'SCATTER') {
-                    if(this.mesh.position.length() < 1) { this.targetPos.copy(this.scatterDir).multiplyScalar(this.scatterRadius); }
-                    else { this.targetPos.copy(this.scatterDir).multiplyScalar(this.scatterRadius + Math.sin(time + this.idx) * 2); }
+                    if(this.mesh.position.length() < 1) { 
+                        this.targetPos.copy(this.scatterDir).multiplyScalar(this.scatterRadius); 
+                    } else { 
+                        this.targetPos.copy(this.scatterDir).multiplyScalar(this.scatterRadius + Math.sin(time + this.idx) * 2); 
+                    }
                     this.mesh.rotation.x += this.scatterSpeed;
                     this.mesh.rotation.y += this.scatterSpeed;
                     this.targetScale.copy(this.originalScale);
@@ -659,8 +685,7 @@
                     }
                 }
                 
-                // Snappier lerp speed
-                const lerpSpeed = mode === 'FOCUS' ? 0.12 : 0.1;
+                const lerpSpeed = mode === 'FOCUS' ? 0.12 : 0.08;
                 this.mesh.position.lerp(this.targetPos, lerpSpeed);
                 
                 if (mode !== 'SCATTER') {
@@ -673,22 +698,51 @@
         }
 
         function generateParticles() {
-            const geoms = [new THREE.BoxGeometry(0.8, 0.8, 0.8), new THREE.SphereGeometry(0.5, 16, 16)];
-            const path = new THREE.CatmullRomCurve3([new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0.5, 1.5, 0), new THREE.Vector3(1, 1, 0)]);
-            const caneGeom = new THREE.TubeGeometry(path, 20, 0.15, 8, false);
+            const ballGeom = new THREE.SphereGeometry(0.5, 16, 16);
+            const boxGeom = new THREE.BoxGeometry(0.7, 0.7, 0.7);
+            const canePath = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, -1, 0), 
+                new THREE.Vector3(0, 1, 0), 
+                new THREE.Vector3(0.5, 1.5, 0), 
+                new THREE.Vector3(1, 1, 0)
+            ]);
+            const caneGeom = new THREE.TubeGeometry(canePath, 20, 0.12, 8, false);
+
             for (let i = 0; i < CONFIG.particleCount; i++) {
                 let mesh;
-                if (Math.random() < 0.6) {
-                    const geom = geoms[Math.floor(Math.random() * geoms.length)];
-                    const mat = Math.random() > 0.5 ? matGold : (Math.random() > 0.5 ? matGreen : matRed);
-                    mesh = new THREE.Mesh(geom, mat);
+                let type = 'ORNAMENT';
+                const rand = Math.random();
+
+                if (rand < 0.5) {
+                    mesh = new THREE.Mesh(ballGeom, [matGold, matRed, matWhite, matGreen][Math.floor(Math.random()*4)]);
+                    type = 'ORNAMENT_BALL';
+                } else if (rand < 0.75) {
+                    mesh = new THREE.Mesh(boxGeom, [matGold, matRed, matGreen][Math.floor(Math.random()*3)]);
                 } else {
-                    const mat = new THREE.MeshStandardMaterial({ map: caneTexture, roughness: 0.3 });
-                    mesh = new THREE.Mesh(caneGeom, mat);
+                    const m = new THREE.MeshStandardMaterial({ map: caneTexture, roughness: 0.3 });
+                    mesh = new THREE.Mesh(caneGeom, m);
+                    mesh.scale.set(0.8, 0.8, 0.8);
                 }
-                mesh.position.set((Math.random()-0.5)*100, -100, (Math.random()-0.5)*100);
+                
+                // Initial randomized position
+                mesh.position.set((Math.random()-0.5)*400, -200 - Math.random()*200, (Math.random()-0.5)*400);
+                mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
                 mainGroup.add(mesh);
-                particles.push(new Particle('ORNAMENT', mesh, i));
+                
+                const p = new Particle(type, mesh, i);
+                // Stratify height for more uniform but natural scatter
+                p.randomU = i / CONFIG.particleCount;
+                p.randomTheta = Math.random() * Math.PI * 2;
+                
+                particles.push(p);
+            }
+            
+            // Randomize order for the height stratification to feel natural
+            for (let i = particles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const tempU = particles[i].randomU;
+                particles[i].randomU = particles[j].randomU;
+                particles[j].randomU = tempU;
             }
         }
 
@@ -696,12 +750,12 @@
             const geom = new THREE.BufferGeometry();
             const pos = [];
             for (let i = 0; i < CONFIG.dustCount; i++) {
-                const r = 35 * Math.cbrt(Math.random());
+                const r = 45 * Math.cbrt(Math.random());
                 const theta = Math.random() * Math.PI * 2, phi = Math.acos(2 * Math.random() - 1);
                 pos.push(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
             }
             geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-            dustSystem = new THREE.Points(geom, new THREE.PointsMaterial({ color: 0xffffff, size: 0.1, transparent: true, opacity: 0.5 }));
+            dustSystem = new THREE.Points(geom, new THREE.PointsMaterial({ color: 0xffffff, size: 0.1, transparent: true, opacity: 0.45 }));
             mainGroup.add(dustSystem);
         }
 
@@ -719,11 +773,25 @@
 
         function addPhotoToScene(texture) {
             const geometry = new THREE.BoxGeometry(3, 3, 0.2);
-            const materials = [matFrame, matFrame, matFrame, matFrame, new THREE.MeshBasicMaterial({ map: texture }), matFrame];
+            const materials = [
+                matFrame, matFrame, matFrame, matFrame, 
+                new THREE.MeshBasicMaterial({ map: texture }), matFrame
+            ];
             const mesh = new THREE.Mesh(geometry, materials);
             mainGroup.add(mesh);
+            
+            const isFirst = photoObjects.length === 0;
             const p = new Particle('PHOTO', mesh, particles.length);
-            p.treeConfig = { u: 0.1 + Math.random() * 0.8, theta: Math.random() * Math.PI * 2 };
+            
+            if (isFirst) {
+                // Peak position (u=1.0)
+                p.treeConfig = { u: 1.05, theta: 0 }; 
+                p.originalScale.multiplyScalar(1.2); 
+            } else {
+                p.randomU = 0.1 + Math.random() * 0.8;
+                p.randomTheta = Math.random() * Math.PI * 2;
+            }
+            
             particles.push(p);
             photoObjects.push(p);
         }
@@ -732,7 +800,10 @@
             document.getElementById('imageInput').addEventListener('change', (e) => {
                 Array.from(e.target.files).forEach(f => {
                     const reader = new FileReader();
-                    reader.onload = (ev) => new THREE.TextureLoader().load(ev.target.result, (t) => { t.colorSpace = THREE.SRGBColorSpace; addPhotoToScene(t); });
+                    reader.onload = (ev) => new THREE.TextureLoader().load(ev.target.result, (t) => { 
+                        t.colorSpace = THREE.SRGBColorSpace; 
+                        addPhotoToScene(t); 
+                    });
                     reader.readAsDataURL(f);
                 });
             });
@@ -741,7 +812,10 @@
         async function initMediaPipeModel() {
             const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
             handLandmarker = await HandLandmarker.createFromOptions(vision, {
-                baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate: "GPU" },
+                baseOptions: { 
+                    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", 
+                    delegate: "GPU" 
+                },
                 runningMode: "VIDEO", numHands: 1
             });
         }
@@ -770,18 +844,18 @@
                 const targetRotY = (palmX - 0.5) * -3;
                 const targetRotX = (palmY - 0.5) * 2;
                 
-                // Rotate immediately for better feel
                 STATE.handRotation.y += (targetRotY - STATE.handRotation.y) * ROTATION_SMOOTHING;
                 STATE.handRotation.x += (targetRotX - STATE.handRotation.x) * ROTATION_SMOOTHING;
 
                 const pinchDist = thumbTip.distanceTo(indexTip);
                 const indexWristDist = indexTip.distanceTo(wrist);
                 let otherFingersDist = 0;
-                [12, 16, 20].forEach(t => otherFingersDist += new THREE.Vector3(lm[t].x, lm[t].y, lm[t].z).distanceTo(wrist));
+                [12, 16, 20].forEach(t => {
+                    otherFingersDist += new THREE.Vector3(lm[t].x, lm[t].y, lm[t].z).distanceTo(wrist);
+                });
                 otherFingersDist /= 3;
 
                 let candidate = STATE.mode;
-                // Refined Thresholds
                 if (pinchDist < 0.05 && indexWristDist > 0.18) candidate = 'FOCUS';
                 else if (otherFingersDist < 0.2) candidate = 'TREE';
                 else if (otherFingersDist > 0.38) candidate = 'SCATTER';
@@ -795,7 +869,6 @@
                     if (counts[g] > maxCount) { maxCount = counts[g]; consensus = g; }
                 }
 
-                // consensus threshold 0.75 of 4 is 3 frames.
                 if (consensus && consensus !== STATE.mode && maxCount >= HISTORY_SIZE * 0.75) {
                     setMode(consensus);
                     GESTURE_HISTORY.length = 0;
@@ -807,13 +880,13 @@
             requestAnimationFrame(animate);
             const dt = clock.getDelta(), time = clock.getElapsedTime();
             
-            // Increased responsiveness in movement
             mainGroup.rotation.y += (STATE.handRotation.y - mainGroup.rotation.y) * 0.3;
             mainGroup.rotation.x += (STATE.handRotation.x - mainGroup.rotation.x) * 0.3;
             
-            if (STATE.mode === 'TREE' && Math.abs(STATE.handRotation.y) < 0.05) mainGroup.rotation.y += 0.003;
+            if (STATE.mode === 'TREE' && Math.abs(STATE.handRotation.y) < 0.05) {
+                mainGroup.rotation.y += 0.003;
+            }
             
-            // Snappier camera zoom
             camera.position.z += (STATE.cameraZ - camera.position.z) * 0.2;
             
             particles.forEach(p => p.update(STATE.mode, dt, time));
@@ -822,11 +895,17 @@
         }
 
         function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight, false); composer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight; 
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight, false); 
+            composer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        function onKeyDown(e) { if (e.key.toLowerCase() === 'h') document.getElementById('ui-container').classList.toggle('ui-hidden'); }
+        function onKeyDown(e) { 
+            if (e.key.toLowerCase() === 'h') {
+                document.getElementById('ui-container').classList.toggle('ui-hidden'); 
+            }
+        }
         init();
     </script>
 </body>
